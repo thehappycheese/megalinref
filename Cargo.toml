@@ -1,0 +1,26 @@
+[package]
+name = "megalinref"
+version = "0.1.0"
+edition="2018"
+
+[lib]
+name = "megalinref"
+crate-type = ["cdylib"]
+
+[dependencies.pyo3]
+version = "0.15"
+features = ["extension-module"]
+
+[dependencies.geo]
+version = "0.18.0"
+features = ["use-serde"]
+
+[dependencies.reqwest]
+version = "0.11.9"
+
+
+[dependencies.pyo3-asyncio]
+version = "0.15"
+features = ["attributes", "tokio-runtime"]
+
+[dependencies]
