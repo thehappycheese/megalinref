@@ -7,6 +7,9 @@ edition="2018"
 name = "megalinref"
 crate-type = ["cdylib"]
 
+[package.metadata.maturin]
+python-source = "python"
+
 [dependencies.pyo3]
 version = "0.15"
 features = ["extension-module"]
@@ -15,12 +18,7 @@ features = ["extension-module"]
 version = "0.18.0"
 features = ["use-serde"]
 
-[dependencies.reqwest]
-version = "0.11.9"
-
-
-[dependencies.pyo3-asyncio]
-version = "0.15"
-features = ["attributes", "tokio-runtime"]
+[dependencies.serde]
+version="1.0"
 
 [dependencies]

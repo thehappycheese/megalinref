@@ -1,0 +1,8 @@
+[project]
+name = "megalinref"
+author = "Nicholas Archer"
+dependencies = ["pandas", "requests", "arcgis2geojson"]
+
+[build-system]
+requires = ["maturin>=0.12,<0.13"]
+build-backend = "maturin"

@@ -1,14 +1,17 @@
 //#![feature(specialization)]
 
 extern crate pyo3;
-use pyo3::prelude::*;
 
-mod load_or_fetch_data;
+use pyo3::{prelude::*, types::PyList, types::PyDict};
 
-use load_or_fetch_data::{
-    test_geo as lofd_test_geo,
-    fetch_data as lofd_fetch_data
+mod slk_from_lat_lon;
+mod enums;
+
+use enums::{
+    Cwy,
+    NetworkType
 };
+use slk_from_lat_lon::SLKLookup;
 
 
 
@@ -18,22 +21,36 @@ fn adder(a: i64, b: i64) -> i64 {
     a + b
 }
 
-#[pyfunction]
-fn test_geo() -> String {
-    lofd_test_geo()
-}
-
-#[pyfunction]
-fn fetch_data(py:Python, url:String) -> PyResult<&PyAny> {
-    pyo3_asyncio::tokio::future_into_py(py, async move {
-        Ok(lofd_fetch_data(&url).await)
-    })
-}
-
 #[pymodule]
 fn megalinref(_py: Python, m: &PyModule) -> PyResult<()> {
+    
     m.add_function(wrap_pyfunction!(adder, m)?)?;
-    m.add_function(wrap_pyfunction!(test_geo, m)?)?;
-    m.add_function(wrap_pyfunction!(fetch_data, m)?)?;
+
+    let cwy_dict = PyDict::from_sequence(
+        _py, 
+        PyList::new(_py, &vec![
+            ("L", Cwy::L),
+            ("S", Cwy::S),
+            ("R", Cwy::R),
+        ]).to_object(_py)
+    ).unwrap();
+    
+    let network_type_dict = PyDict::from_sequence(
+        _py, 
+        PyList::new(_py, &vec![
+            ("State Road",                 NetworkType::State_Road),
+            ("Local Road",                 NetworkType::Local_Road),
+            ("Miscellaneous Road",         NetworkType::Miscellaneous_Road),
+            ("Main Roads Controlled_Path", NetworkType::Main_Roads_Controlled_Path),
+            ("Proposed Road",              NetworkType::Proposed_Road),
+            ("Crossover",                  NetworkType::Crossover),
+        ]).to_object(_py)
+    ).unwrap();
+    
+
+    m.add("CWY", cwy_dict)?;
+    m.add("NETWORK_TYPE", network_type_dict)?;
+    m.add_class::<SLKLookup>()?;
+
     Ok(())
 }
