@@ -1,7 +1,7 @@
 [package]
 name = "megalinref"
 version = "0.1.0"
-edition="2018"
+edition="2021"
 
 [lib]
 name = "megalinref"
@@ -15,10 +15,10 @@ version = "0.15"
 features = ["extension-module"]
 
 [dependencies.geo]
-version = "0.18.0"
+version = "0.18"
 features = ["use-serde"]
 
-[dependencies.serde]
-version="1.0"
-
 [dependencies]
+serde="1.0"
+bincode="1.3"
+rstar = "0.9"

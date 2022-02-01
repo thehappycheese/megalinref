@@ -5,9 +5,9 @@ extern crate pyo3;
 use pyo3::{prelude::*, types::PyList, types::PyDict};
 
 mod slk_from_lat_lon;
-mod enums;
+mod util;
 
-use enums::{
+use util::enums::{
     Cwy,
     NetworkType
 };
@@ -15,16 +15,8 @@ use slk_from_lat_lon::SLKLookup;
 
 
 
-
-#[pyfunction]
-fn adder(a: i64, b: i64) -> i64 {
-    a + b
-}
-
 #[pymodule]
 fn megalinref(_py: Python, m: &PyModule) -> PyResult<()> {
-    
-    m.add_function(wrap_pyfunction!(adder, m)?)?;
 
     let cwy_dict = PyDict::from_sequence(
         _py, 
