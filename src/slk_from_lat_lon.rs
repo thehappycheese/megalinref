@@ -1,88 +1,20 @@
 
-
-use geo::{LineString};
-
-
+use bincode;
 use pyo3::prelude::*;
-use pyo3::types::{PyDict};
+use pyo3::types::{PyDict, PyBytes};
 use serde::{Serialize, Deserialize};
+use rstar::RTree;
 
-use crate::enums::{Cwy, NetworkType};
+use crate::util::extracted::ExtractedFeature;
+use crate::util::pyobject_linestring::MyLineString;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct MyLineString(LineString<f64>);
-
-impl<'a> FromPyObject<'a> for MyLineString{
-    fn extract(obj: &'a PyAny) -> PyResult<Self> {
-        let linestring_dict = obj.extract::<&PyDict>()?;
-        let coords = linestring_dict
-            .get_item("coordinates")
-            .unwrap()
-            .extract::<Vec<&PyAny>>()?;
-        
-        let coords:Vec<(f64, f64)> = coords.into_iter().map(|item|{
-            let list = item.extract::<Vec<f64>>().unwrap();
-            (list[0], list[1])
-        }).collect();
-        let result  = MyLineString(LineString::from(coords));
-        Ok(result)
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[pyclass]
 pub struct SLKLookup{
-    features:Vec<ExtractedFeature>
+    features:Vec<ExtractedFeature>,
+    rtree:RTree<MyLineString>
 }
-
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ExtractedProperties{
-    road:String,
-    cwy:Cwy,
-    slk_from:f64,
-    slk_to:f64,
-    true_from:f64,
-    true_to:f64,
-    network_type:NetworkType,
-}
-
-impl<'a> FromPyObject<'a> for ExtractedProperties{
-    fn extract(ob: &'a PyAny) -> PyResult<Self> {
-        let ob = ob.cast_as::<PyDict>()?;
-        
-        Ok(Self{
-            road:         ob.get_item("ROAD")            .unwrap().extract::<String>()?,
-            cwy:          ob.get_item("CWY")             .unwrap().extract::<Cwy>()?,
-            slk_from:     ob.get_item("START_SLK")       .unwrap().extract::<f64>()?,
-            slk_to:       ob.get_item("END_SLK")         .unwrap().extract::<f64>()?,
-            true_from:    ob.get_item("START_TRUE_DIST") .unwrap().extract::<f64>()?,
-            true_to:      ob.get_item("END_TRUE_DIST")   .unwrap().extract::<f64>()?,
-            network_type: ob.get_item("NETWORK_TYPE")    .unwrap().extract::<NetworkType>()?,
-        })
-    }
-}
-
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ExtractedFeature {
-    properties:ExtractedProperties,
-    geometry:MyLineString
-}
-
-impl<'a> FromPyObject<'a> for ExtractedFeature{
-    fn extract(ob: &'a PyAny) -> PyResult<Self> {
-        let dict = ob.extract::<&PyDict>()?;
-        let properties = dict.get_item("properties").unwrap().extract::<ExtractedProperties>()?;
-        let geometry = dict.get_item("geometry").unwrap().extract::<MyLineString>()?;
-        Ok(Self{
-            properties,
-            geometry
-        })
-    }
-}
-
-
 
 #[pymethods]
 impl SLKLookup{
@@ -106,5 +38,33 @@ impl SLKLookup{
 
     pub fn lookup(&self, index:usize) -> PyResult<String>{
         Ok(format!("{}", self.features[index].properties.road))
+    }
+
+    pub fn to_binary(&self, py:Python) -> PyResult<PyObject>{
+        let encoded = bincode::serialize(&self.features).unwrap();
+        let result;
+        result = PyBytes::new_with(py, encoded.len(),|buffer|{
+            buffer.copy_from_slice(&encoded);
+            Ok(())
+        });
+        let result = result.unwrap();
+        Ok(result.to_object(py))
+    }
+
+    // pub fn to_binary(&self, py:Python) -> PyResult<PyObject>{
+    //     let slc = bincode::serialize(&self.features).unwrap().as_slice();
+    //     Ok(
+    //         PyBytes::new(
+    //             py,
+    //             slc
+    //         )
+    //     )
+    // }
+
+    #[staticmethod]
+    pub fn from_binary(input:&PyBytes) -> PyResult<Self>{
+        Ok(Self{
+            features:bincode::deserialize(input.as_bytes()).unwrap()
+        })
     }
 }

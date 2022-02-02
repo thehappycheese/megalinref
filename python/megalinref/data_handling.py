@@ -14,6 +14,7 @@ def _download_fresh_data_as_json(url=DATA_SOURCE_URL, chunk_limit=None):
 
     response = requests.request("GET", f"{url}&returnCountOnly=true")
     record_count = response.json()["count"]
+    print("." * math.floor(record_count/1000))
 
     print(f"Downloading {record_count} records" + (":" if chunk_limit is None else f", {chunk_limit=}:"))
     # TODO: Add progress bar
@@ -36,7 +37,7 @@ def _download_fresh_data_as_json(url=DATA_SOURCE_URL, chunk_limit=None):
         if "exceededTransferLimit" not in json or not json["exceededTransferLimit"]:
             break
         print(".", end="")
-    print("\nDownload Completed")
+    print(f"\nDownload Completed. received {len(output)} records")
     json["features"] = output
     json = arcgis2geojson(json)
     return json
