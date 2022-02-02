@@ -1,14 +1,16 @@
-use geo::LineString;
+use geo::{LineString};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use rstar::{RTreeObject, AABB, PointDistance};
 use serde::{Deserialize, Serialize};
-use rstar::{AABB, RTreeObject};
+
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct MyLineString(LineString<f64>);
+pub struct MyLineString(pub LineString<f64>, pub usize);
 
 impl<'a> FromPyObject<'a> for MyLineString {
     fn extract(obj: &'a PyAny) -> PyResult<Self> {
+
         let linestring_dict = obj.extract::<&PyDict>()?;
         let coords = linestring_dict
             .get_item("coordinates")
@@ -22,15 +24,21 @@ impl<'a> FromPyObject<'a> for MyLineString {
                 (list[0], list[1])
             })
             .collect();
-        let result = MyLineString(LineString::from(coords));
+        let result = MyLineString(LineString::from(coords), 0usize);
         Ok(result)
     }
 }
 
-impl RTreeObject for MyLineString {
-    type Envelope = AABB<[f64; 2]>;
 
+impl RTreeObject for MyLineString {
+    type Envelope = AABB<geo_types::Point<f64>>;
     fn envelope(&self) -> Self::Envelope {
-        self.envelope().into()
+        self.0.envelope().into()
+    }
+}
+
+impl PointDistance for MyLineString {
+    fn distance_2(&self, point: &geo::Point<f64>) -> f64 {
+        self.0.distance_2(point)
     }
 }
