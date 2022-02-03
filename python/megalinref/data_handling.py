@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import requests
 from arcgis2geojson import arcgis2geojson
+import math
 import os
 
 DATA_SOURCE_URL = "https://mrgis.mainroads.wa.gov.au/arcgis/rest/services/OpenData/RoadAssets_DataPortal/MapServer/17/query?where=1%3D1&outFields=ROAD,START_SLK,END_SLK,CWY,NETWORK_TYPE,START_TRUE_DIST,END_TRUE_DIST&outSR=4326&f=json"
@@ -14,10 +15,13 @@ def _download_fresh_data_as_json(url=DATA_SOURCE_URL, chunk_limit=None):
 
     response = requests.request("GET", f"{url}&returnCountOnly=true")
     record_count = response.json()["count"]
-    print("." * math.floor(record_count/1000))
 
     print(f"Downloading {record_count} records" + (":" if chunk_limit is None else f", {chunk_limit=}:"))
-    # TODO: Add progress bar
+    if chunk_limit is not None:
+        print("." * min(chunk_limit, math.floor(record_count/1000)))
+    else:
+        print("." * math.floor(record_count/1000))
+
     # TODO: make this download multiple chunks in parallel
 
     output=[]

@@ -1,26 +1,25 @@
 
 use bincode;
+
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyBytes};
-use serde::{Serialize, Deserialize};
-use rstar::RTree;
+use pyo3::types::{PyDict, PyBytes, PyList};
+use rstar::{RTree};
+
 
 use crate::util::extracted::ExtractedFeature;
 use crate::util::pyobject_linestring::MyLineString;
 
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
 #[pyclass]
 pub struct SLKLookup{
     features:Vec<ExtractedFeature>,
-    rtree:RTree<MyLineString>
+    spatial_index:RTree<MyLineString>,
 }
 
 #[pymethods]
 impl SLKLookup{
     #[new]
     pub fn new(python_dictionary:&PyDict) -> PyResult<Self>{
-        
         let features:Vec<ExtractedFeature> = python_dictionary
         .get_item("features")
         .unwrap()
@@ -30,14 +29,20 @@ impl SLKLookup{
             println!("DO {:?}", item);
             item.extract().unwrap()
         }).collect();
-        //panic!("AFTER FEATURE COLLECT");
-        Ok(Self{
-            features:features
-        })
+        Self::from_features(features)
+        
     }
 
-    pub fn lookup(&self, index:usize) -> PyResult<String>{
-        Ok(format!("{}", self.features[index].properties.road))
+    pub fn lookup(&self, lat:f64, lon:f64, dist:f64, py:Python) -> PyResult<PyObject>{
+        let result:Vec<usize> = self
+            .spatial_index
+            .locate_within_distance(
+                [lat,lon].into(),
+                dist
+            )
+            .map(|MyLineString(_, index)| *index)
+            .collect();
+        Ok(PyList::new(py, &result).to_object(py))
     }
 
     pub fn to_binary(&self, py:Python) -> PyResult<PyObject>{
@@ -63,8 +68,20 @@ impl SLKLookup{
 
     #[staticmethod]
     pub fn from_binary(input:&PyBytes) -> PyResult<Self>{
-        Ok(Self{
-            features:bincode::deserialize(input.as_bytes()).unwrap()
-        })
+        Self::from_features(
+            bincode::deserialize(input.as_bytes()).unwrap()
+        )
+    }
+
+    #[staticmethod]
+    fn from_features(features:Vec<ExtractedFeature>) -> PyResult<Self> {
+        let spatial_index = RTree::bulk_load(
+            (&features)
+            .iter()
+            .enumerate()
+            .map(|(index, ExtractedFeature{geometry:MyLineString(ls,_), ..})| MyLineString(ls.clone(), index))
+            .collect()
+        );
+        Ok(Self{features, spatial_index})
     }
 }
