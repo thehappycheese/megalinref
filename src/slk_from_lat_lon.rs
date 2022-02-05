@@ -1,36 +1,51 @@
 
+use std::sync::Arc;
+
 use bincode;
 
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyBytes, PyList};
-use rstar::{RTree};
+use rstar::{RTree, RTreeParams, RStarInsertionStrategy};
 
 
-use crate::util::extracted::ExtractedFeature;
-use crate::util::pyobject_linestring::MyLineString;
+
+use crate::datatypes::{
+    ExtractedFeature,
+    ArcBoxExtractedFeature,
+};
+
+struct LargeNodeParameters;
+impl RTreeParams for LargeNodeParameters {
+    const MIN_SIZE:          usize = 200;
+    const MAX_SIZE:          usize = 2000;
+    const REINSERTION_COUNT: usize = 2;
+    type DefaultInsertionStrategy = RStarInsertionStrategy;
+}
+type LargeNodeRTree<T> = RTree<T, LargeNodeParameters>;
+
 
 
 #[pyclass]
 pub struct SLKLookup{
-    features:Vec<ExtractedFeature>,
-    spatial_index:RTree<MyLineString>,
+    features:Vec<ArcBoxExtractedFeature>,
+    spatial_index:LargeNodeRTree<ArcBoxExtractedFeature>,
 }
 
 #[pymethods]
 impl SLKLookup{
     #[new]
     pub fn new(python_dictionary:&PyDict) -> PyResult<Self>{
-        let features:Vec<ExtractedFeature> = python_dictionary
+        let features:Vec<ArcBoxExtractedFeature> = python_dictionary
         .get_item("features")
         .unwrap()
         .extract::<Vec<&PyAny>>()?
         .into_iter()
-        .map(|item|{
+        .enumerate()
+        .map(|(index, item)|{
             println!("DO {:?}", item);
-            item.extract().unwrap()
+            ArcBoxExtractedFeature(Arc::new(Box::new(ExtractedFeature::from_pyobject_with_index(item, index).unwrap())))
         }).collect();
         Self::from_features(features)
-        
     }
 
     pub fn lookup(&self, lat:f64, lon:f64, dist:f64, py:Python) -> PyResult<PyObject>{
@@ -40,7 +55,7 @@ impl SLKLookup{
                 [lat,lon].into(),
                 dist
             )
-            .map(|MyLineString(_, index)| *index)
+            .map(|ArcBoxExtractedFeature(feature)| feature.index)
             .collect();
         Ok(PyList::new(py, &result).to_object(py))
     }
@@ -68,20 +83,24 @@ impl SLKLookup{
 
     #[staticmethod]
     pub fn from_binary(input:&PyBytes) -> PyResult<Self>{
-        Self::from_features(
-            bincode::deserialize(input.as_bytes()).unwrap()
-        )
+        Self::from_features(bincode::deserialize(input.as_bytes()).unwrap())
     }
 
-    #[staticmethod]
-    fn from_features(features:Vec<ExtractedFeature>) -> PyResult<Self> {
-        let spatial_index = RTree::bulk_load(
+    
+}
+
+// By creating a separate impl block we escape the requirements of the #[pyclass] / #[pymethods] macros
+impl SLKLookup{
+    fn from_features(features:Vec<ArcBoxExtractedFeature>) -> PyResult<Self> {
+        let spatial_index = LargeNodeRTree::bulk_load_with_params(
             (&features)
             .iter()
-            .enumerate()
-            .map(|(index, ExtractedFeature{geometry:MyLineString(ls,_), ..})| MyLineString(ls.clone(), index))
+            .map(|feat| ArcBoxExtractedFeature(feat.0.clone()))
             .collect()
         );
-        Ok(Self{features, spatial_index})
+        Ok(Self{
+            features,
+            spatial_index
+        })
     }
 }

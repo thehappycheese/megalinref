@@ -5,9 +5,9 @@ extern crate pyo3;
 use pyo3::{prelude::*, types::PyList, types::PyDict};
 
 mod slk_from_lat_lon;
-mod util;
+mod datatypes;
 
-use util::enums::{
+use datatypes::{
     Cwy,
     NetworkType
 };
