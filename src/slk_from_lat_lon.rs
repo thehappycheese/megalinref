@@ -1,41 +1,44 @@
 
-use std::sync::Arc;
-
 use bincode;
 
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyBytes, PyList};
+
 use rstar::{RTree, RTreeParams, RStarInsertionStrategy};
+use rstar::primitives::{GeomWithData, Line};
 
 
 
 use crate::datatypes::{
     ExtractedFeature,
-    ArcBoxExtractedFeature,
 };
 
 struct LargeNodeParameters;
 impl RTreeParams for LargeNodeParameters {
-    const MIN_SIZE:          usize = 200;
-    const MAX_SIZE:          usize = 2000;
-    const REINSERTION_COUNT: usize = 2;
+    const MIN_SIZE:          usize = 4;
+    const MAX_SIZE:          usize = 10;
+    const REINSERTION_COUNT: usize = 3;
     type DefaultInsertionStrategy = RStarInsertionStrategy;
 }
 type LargeNodeRTree<T> = RTree<T, LargeNodeParameters>;
 
 
 
+type SpatialIndexLineSegment = GeomWithData<Line<[f64;2]>, usize>;
+
+
+
 #[pyclass]
 pub struct SLKLookup{
-    features:Vec<ArcBoxExtractedFeature>,
-    spatial_index:LargeNodeRTree<ArcBoxExtractedFeature>,
+    features:Vec<ExtractedFeature>,
+    spatial_index:LargeNodeRTree<SpatialIndexLineSegment>,
 }
 
 #[pymethods]
 impl SLKLookup{
     #[new]
     pub fn new(python_dictionary:&PyDict) -> PyResult<Self>{
-        let features:Vec<ArcBoxExtractedFeature> = python_dictionary
+        let features:Vec<ExtractedFeature> = python_dictionary
         .get_item("features")
         .unwrap()
         .extract::<Vec<&PyAny>>()?
@@ -43,7 +46,7 @@ impl SLKLookup{
         .enumerate()
         .map(|(index, item)|{
             println!("DO {:?}", item);
-            ArcBoxExtractedFeature(Arc::new(Box::new(ExtractedFeature::from_pyobject_with_index(item, index).unwrap())))
+            ExtractedFeature::from_pyobject_with_index(item, index).unwrap()
         }).collect();
         Self::from_features(features)
     }
@@ -55,7 +58,7 @@ impl SLKLookup{
                 [lat,lon].into(),
                 dist
             )
-            .map(|ArcBoxExtractedFeature(feature)| feature.index)
+            .map(|item| item.data)
             .collect();
         Ok(PyList::new(py, &result).to_object(py))
     }
@@ -71,16 +74,6 @@ impl SLKLookup{
         Ok(result.to_object(py))
     }
 
-    // pub fn to_binary(&self, py:Python) -> PyResult<PyObject>{
-    //     let slc = bincode::serialize(&self.features).unwrap().as_slice();
-    //     Ok(
-    //         PyBytes::new(
-    //             py,
-    //             slc
-    //         )
-    //     )
-    // }
-
     #[staticmethod]
     pub fn from_binary(input:&PyBytes) -> PyResult<Self>{
         Self::from_features(bincode::deserialize(input.as_bytes()).unwrap())
@@ -90,12 +83,38 @@ impl SLKLookup{
 }
 
 // By creating a separate impl block we escape the requirements of the #[pyclass] / #[pymethods] macros
+
+
+
 impl SLKLookup{
-    fn from_features(features:Vec<ArcBoxExtractedFeature>) -> PyResult<Self> {
+    /// TODO: this function basically exists to build the RTree, but it turns out we can serialize the RTree
+    ///       so we should only do this for new trees.
+    fn from_features(features:Vec<ExtractedFeature>) -> PyResult<Self> {
+        
         let spatial_index = LargeNodeRTree::bulk_load_with_params(
             (&features)
             .iter()
-            .map(|feat| ArcBoxExtractedFeature(feat.0.clone()))
+            .enumerate()
+            .flat_map(|(index, feat)| {
+                // extract line segments from feat.geometry
+                let line_segments:Vec<SpatialIndexLineSegment> = feat
+                    .geometry
+                    .0
+                    .lines()
+                    .map(|geo_line| {
+                        let start = geo_line.start;
+                        let end = geo_line.end;
+                        SpatialIndexLineSegment::new(
+                            Line::new(
+                                [start.x, start.y],
+                                [end.x, end.y]
+                            ), 
+                            index
+                        )
+                    })
+                    .collect();
+                line_segments
+            })
             .collect()
         );
         Ok(Self{

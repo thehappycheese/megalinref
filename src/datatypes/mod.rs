@@ -13,4 +13,3 @@ pub use extracted_properties::ExtractedProperties;
 
 mod extracted_feature;
 pub use extracted_feature::ExtractedFeature;
-pub use extracted_feature::ArcBoxExtractedFeature;
