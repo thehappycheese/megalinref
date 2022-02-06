@@ -21,8 +21,9 @@ This library is in early stages of development. Road map below:
 - [x] Get rust to build, and python to import
 - [x] Get data downloaded in python
 - [x] Get GeoJSON passed into rust data structure
-  - [ ] Get rust to serialize and compress its internal data structure
-- [ ] Insert geometry into some sort of RTree structure
+  - [x] Get rust to serialize and compress its internal data structure
+- [x] Insert geometry into some sort of RTree structure
+  - [ ] Make it actually perform as fast as I expected :( this is turning out to be pretty hard.
 - [ ] Get reverse spatial lookup working
   - [ ] lat/lon to Road/Cwy/SLK, one point at a time
   - [ ] lat/lon to Road/Cwy/SLK, from numpy array of coordinates

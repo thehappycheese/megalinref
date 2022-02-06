@@ -4,8 +4,13 @@ use bincode;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyBytes, PyList};
 
+
+
 use rstar::{RTree, RTreeParams, RStarInsertionStrategy};
-use rstar::primitives::{GeomWithData, Line};
+use rstar::primitives::{GeomWithData, Rectangle};
+
+use geo::bounding_rect::BoundingRect;
+
 
 
 
@@ -15,23 +20,23 @@ use crate::datatypes::{
 
 struct LargeNodeParameters;
 impl RTreeParams for LargeNodeParameters {
-    const MIN_SIZE:          usize = 4;
-    const MAX_SIZE:          usize = 10;
-    const REINSERTION_COUNT: usize = 3;
+    const MIN_SIZE:          usize = 10;
+    const MAX_SIZE:          usize = 30;
+    const REINSERTION_COUNT: usize = 5;
     type DefaultInsertionStrategy = RStarInsertionStrategy;
 }
 type LargeNodeRTree<T> = RTree<T, LargeNodeParameters>;
 
 
 
-type SpatialIndexLineSegment = GeomWithData<Line<[f64;2]>, usize>;
+type SpatialIndexRectangle = GeomWithData<Rectangle<[f64;2]>, usize>;
 
 
 
 #[pyclass]
 pub struct SLKLookup{
     features:Vec<ExtractedFeature>,
-    spatial_index:LargeNodeRTree<SpatialIndexLineSegment>,
+    spatial_index:LargeNodeRTree<SpatialIndexRectangle>,
 }
 
 #[pymethods]
@@ -95,25 +100,19 @@ impl SLKLookup{
             (&features)
             .iter()
             .enumerate()
-            .flat_map(|(index, feat)| {
+            .map(|(index, feat)| {
                 // extract line segments from feat.geometry
-                let line_segments:Vec<SpatialIndexLineSegment> = feat
+                let envelope = feat
                     .geometry
                     .0
-                    .lines()
-                    .map(|geo_line| {
-                        let start = geo_line.start;
-                        let end = geo_line.end;
-                        SpatialIndexLineSegment::new(
-                            Line::new(
-                                [start.x, start.y],
-                                [end.x, end.y]
-                            ), 
-                            index
-                        )
-                    })
-                    .collect();
-                line_segments
+                    .bounding_rect()
+                    .unwrap();
+                let min = envelope.min();
+                let max = envelope.max();
+                GeomWithData::new(
+                    Rectangle::from_corners([min.x, min.y],[max.x, max.y]),
+                    index
+                )
             })
             .collect()
         );
