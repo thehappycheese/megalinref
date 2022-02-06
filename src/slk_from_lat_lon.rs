@@ -1,42 +1,26 @@
 
 use bincode;
 
+use geo::line_locate_point::LineLocatePoint;
+use geo::point;
+use geo::prelude::EuclideanDistance;
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyBytes, PyList};
+use pyo3::types::{PyDict, PyBytes};
 
 
-
-use rstar::{RTree, RTreeParams, RStarInsertionStrategy};
-use rstar::primitives::{GeomWithData, Rectangle};
-
-use geo::bounding_rect::BoundingRect;
-
-
+use rayon::prelude::*;
 
 
 use crate::datatypes::{
-    ExtractedFeature,
+    ExtractedFeature
 };
 
-struct LargeNodeParameters;
-impl RTreeParams for LargeNodeParameters {
-    const MIN_SIZE:          usize = 10;
-    const MAX_SIZE:          usize = 30;
-    const REINSERTION_COUNT: usize = 5;
-    type DefaultInsertionStrategy = RStarInsertionStrategy;
-}
-type LargeNodeRTree<T> = RTree<T, LargeNodeParameters>;
-
-
-
-type SpatialIndexRectangle = GeomWithData<Rectangle<[f64;2]>, usize>;
 
 
 
 #[pyclass]
 pub struct SLKLookup{
-    features:Vec<ExtractedFeature>,
-    spatial_index:LargeNodeRTree<SpatialIndexRectangle>,
+    features:Vec<ExtractedFeature>
 }
 
 #[pymethods]
@@ -48,24 +32,46 @@ impl SLKLookup{
         .unwrap()
         .extract::<Vec<&PyAny>>()?
         .into_iter()
-        .enumerate()
-        .map(|(index, item)|{
-            println!("DO {:?}", item);
-            ExtractedFeature::from_pyobject_with_index(item, index).unwrap()
-        }).collect();
-        Self::from_features(features)
+        .map(|feature| feature.extract::<ExtractedFeature>().unwrap())
+        .collect();
+        Ok(
+            Self{features}
+        )
     }
 
-    pub fn lookup(&self, lat:f64, lon:f64, dist:f64, py:Python) -> PyResult<PyObject>{
-        let result:Vec<usize> = self
-            .spatial_index
-            .locate_within_distance(
-                [lat,lon].into(),
-                dist
-            )
-            .map(|item| item.data)
-            .collect();
-        Ok(PyList::new(py, &result).to_object(py))
+    pub fn lookup(&self, lat:f64, lon:f64, cwy:u8, network_type:u8, py:Python) -> PyResult<PyObject>{
+        let pnt = point!(x:lon, y:lat);
+
+        let (index, distance) = self
+            .features
+            .par_iter()
+            .enumerate()
+            .filter(|(_index, ExtractedFeature{properties, ..})| ((properties.cwy as u8) & cwy) != 0 && ((properties.network_type as u8) & network_type) != 0)
+            .map(|(index, feature)| Some((index, feature.geometry.0.euclidean_distance(&pnt))))
+            .reduce(|| None, |a, b|{
+                match (a, b){
+                    (None, b) => b,
+                    (a, None) => a,
+                    (Some((a_index, a_dist)), Some((b_index, b_dist))) => {
+                        if a_dist < b_dist {
+                            Some((a_index, a_dist))
+                        }else{
+                            Some((b_index, b_dist))
+                        }
+                    }
+                }
+            }).unwrap();
+        
+        let feature = &self.features[index];
+
+        let distance_along_object = feature.geometry.0.line_locate_point(&pnt).unwrap();
+
+        let feature_dict = PyDict::new(py);
+        feature_dict.set_item("feature", feature.properties.to_object(py))?;
+        feature_dict.set_item("slk",(feature.properties.slk_from + (feature.properties.slk_to - feature.properties.slk_from) * distance_along_object ).to_object(py))?;
+        feature_dict.set_item("true",(feature.properties.true_from + (feature.properties.true_to - feature.properties.true_from) * distance_along_object).to_object(py))?;
+        feature_dict.set_item("distance", distance)?;
+        Ok(feature_dict.to_object(py))
     }
 
     pub fn to_binary(&self, py:Python) -> PyResult<PyObject>{
@@ -81,44 +87,11 @@ impl SLKLookup{
 
     #[staticmethod]
     pub fn from_binary(input:&PyBytes) -> PyResult<Self>{
-        Self::from_features(bincode::deserialize(input.as_bytes()).unwrap())
+        Ok(
+            Self{
+                features: bincode::deserialize(input.as_bytes()).unwrap()
+            }
+        )
     }
-
     
-}
-
-// By creating a separate impl block we escape the requirements of the #[pyclass] / #[pymethods] macros
-
-
-
-impl SLKLookup{
-    /// TODO: this function basically exists to build the RTree, but it turns out we can serialize the RTree
-    ///       so we should only do this for new trees.
-    fn from_features(features:Vec<ExtractedFeature>) -> PyResult<Self> {
-        
-        let spatial_index = LargeNodeRTree::bulk_load_with_params(
-            (&features)
-            .iter()
-            .enumerate()
-            .map(|(index, feat)| {
-                // extract line segments from feat.geometry
-                let envelope = feat
-                    .geometry
-                    .0
-                    .bounding_rect()
-                    .unwrap();
-                let min = envelope.min();
-                let max = envelope.max();
-                GeomWithData::new(
-                    Rectangle::from_corners([min.x, min.y],[max.x, max.y]),
-                    index
-                )
-            })
-            .collect()
-        );
-        Ok(Self{
-            features,
-            spatial_index
-        })
-    }
 }

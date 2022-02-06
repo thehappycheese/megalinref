@@ -2,7 +2,7 @@
 use pyo3::{ToPyObject, PyObject, Python, FromPyObject, PyResult, PyAny};
 use serde::{Serialize, Deserialize};
 
-#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 #[allow(non_camel_case_types)]
 pub enum NetworkType {
     State_Road                 = 0b0000_0001,
@@ -12,6 +12,7 @@ pub enum NetworkType {
     Proposed_Road              = 0b0001_0000,
     Crossover                  = 0b0010_0000,
 }
+
 
 impl<'a> FromPyObject<'a> for NetworkType{
     fn extract(ob: &'a PyAny) -> PyResult<Self> {

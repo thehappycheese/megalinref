@@ -6,8 +6,9 @@ use serde::{Deserialize, Serialize};
 
 
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ExtractedLineString(pub LineString<f64>);
+
 
 impl<'a> FromPyObject<'a> for ExtractedLineString {
     fn extract(obj: &'a PyAny) -> PyResult<Self> {

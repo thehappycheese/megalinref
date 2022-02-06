@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use super::{Cwy, NetworkType};
 
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, PartialOrd)]
 pub struct ExtractedProperties{
     pub road:String,
     pub cwy:Cwy,
@@ -15,6 +15,24 @@ pub struct ExtractedProperties{
     pub true_from:f64,
     pub true_to:f64,
     pub network_type:NetworkType,
+}
+
+/// This cannot be derived because some members only implement PartialEq and PartialOrd. 
+/// but Eq is required so that we are allowed to implement Ord.
+/// This basically amounts to an assurance to the compiler, and its pretty hard to understand why it is required.
+impl Eq for ExtractedProperties{}
+
+
+/// Ord only depends on `road` and `cwy`.
+/// We need to be careful that we do not rely on road segments being sorted by `slk_from` or `true_from`.
+/// If that is needed it must be introduced here.
+impl Ord for ExtractedProperties {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match self.road.cmp(&other.road){
+            std::cmp::Ordering::Equal => self.cwy.cmp(&other.cwy),
+            x => x
+        }
+    }
 }
 
 impl<'a> FromPyObject<'a> for ExtractedProperties{
@@ -29,5 +47,19 @@ impl<'a> FromPyObject<'a> for ExtractedProperties{
             true_to:      ob.get_item("END_TRUE_DIST")   .unwrap().extract::<f64>()?,
             network_type: ob.get_item("NETWORK_TYPE")    .unwrap().extract::<NetworkType>()?,
         })
+    }
+}
+
+impl ToPyObject for ExtractedProperties {
+    fn to_object(&self, py: Python) -> PyObject {
+        let dict = PyDict::new(py);
+        dict.set_item("ROAD", self.road.to_object(py)).unwrap();
+        dict.set_item("CWY", self.cwy.to_object(py)).unwrap();
+        dict.set_item("START_SLK", self.slk_from.to_object(py)).unwrap();
+        dict.set_item("END_SLK", self.slk_to.to_object(py)).unwrap();
+        dict.set_item("START_TRUE_DIST", self.true_from.to_object(py)).unwrap();
+        dict.set_item("END_TRUE_DIST", self.true_to.to_object(py)).unwrap();
+        dict.set_item("NETWORK_TYPE", self.network_type.to_object(py)).unwrap();
+        dict.to_object(py)
     }
 }

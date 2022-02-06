@@ -2,7 +2,19 @@ use pyo3::{ToPyObject, PyObject, Python, FromPyObject, PyResult, PyAny};
 use serde::{Serialize, Deserialize};
 
 
-#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
+/// The carriageway of a road.
+/// 
+/// Although rust does not treat Enums as a bitflag, we will assume that python can treat them as such.
+/// 
+/// ```
+/// L = 0b0100
+/// S = 0b0010
+/// R = 0b0001
+/// ```
+/// 
+/// > Note: The cwy field is ordered `L` then `S` then `R`
+/// 
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Eq, Ord)]
 pub enum Cwy {
     L = 0b0000_0100,
     S = 0b0000_0010,

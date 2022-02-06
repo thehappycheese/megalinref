@@ -6,23 +6,30 @@ use super::{ExtractedLineString, ExtractedProperties};
 
 #[derive(Serialize, Deserialize)]
 pub struct ExtractedFeature {
-    pub index:usize,
     pub properties:ExtractedProperties,
     pub geometry:ExtractedLineString
 }
 
+impl PartialEq for ExtractedFeature {
+    fn eq(&self, other: &Self) -> bool {
+        self.properties == other.properties
+    }
+}
 
-impl ExtractedFeature{
-    // extract from pyobject with index set
-    pub fn from_pyobject_with_index(obj: &PyAny, index:usize) -> PyResult<Self> {
-        let dict = obj.extract::<&PyDict>()?;
-        let properties = dict.get_item("properties").unwrap().extract::<ExtractedProperties>()?;
-        let geometry = dict.get_item("geometry").unwrap().extract::<ExtractedLineString>()?;
-        Ok(Self{
-            index,
-            properties,
-            geometry
-        })
+// PartialOrd is needed to satisfy the Ord trait.
+impl PartialOrd for ExtractedFeature {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.properties.cmp(&other.properties))
+    }
+}
+
+// Eq is needed to satisfy the Ord trait.
+impl Eq for ExtractedFeature{}
+
+// Allows easy sorting
+impl Ord for ExtractedFeature {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.properties.cmp(&other.properties)
     }
 }
 
@@ -33,7 +40,6 @@ impl<'a> FromPyObject<'a> for ExtractedFeature{
         let properties = dict.get_item("properties").unwrap().extract::<ExtractedProperties>()?;
         let geometry = dict.get_item("geometry").unwrap().extract::<ExtractedLineString>()?;
         Ok(Self{
-            index:0,
             properties,
             geometry
         })
