@@ -1,7 +1,14 @@
 [project]
-name = "megalinref"
+name            = "megalinref"
+version         = "0.1.0"
+description     = "Find SLK and Road Number from lat/lon (and vice versa) using Main Roads Western Australia open data portal data."
+readme          = "readme.md"
+requires-python = ">=3.9"
 author = "Nicholas Archer"
 dependencies = ["pandas", "requests", "arcgis2geojson"]
+
+[project.urls]
+repository      = "https://github.com/thehappycheese/megalinref"
 
 [build-system]
 requires = ["maturin>=0.12,<0.13"]
