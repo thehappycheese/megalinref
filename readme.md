@@ -8,6 +8,7 @@ Built in Rust ⚙️ for the mega-speed you deserve 😉
    - Previously I implemented a pure Rust server for this purpose; see <https://github.com/thehappycheese/nicklinref_rust>
 
 - [1. Development Progress](#1-development-progress)
+- [Installation](#installation)
 - [2. Usage / Examples](#2-usage--examples)
 - [3. Why write a Python Library in Rust?](#3-why-write-a-python-library-in-rust)
 - [4. Setup for Development](#4-setup-for-development)
@@ -41,21 +42,48 @@ This library is in early stages of development. Road map below:
 - [ ] Publish on Conda-Forge with windows binaries
   - [ ] Publish anylinux binaries (if it ever seems like enough people might use the package, or if I need to use it on some cloud platform)
 
+## Installation
+
+See the [releases](https://github.com/thehappycheese/megalinref/releases) page for instructions on how to install each release.
+
 ## 2. Usage / Examples
 
 The interface is currently awful and messy, but it will look something like this:
 
 ```python
-import megalinref
-from megalinref.megalinref import SLKLookup
+import megalinref as mlr
+data = mlr.download_fresh_data_as_json()
+slk_lookup = mlr.SLKLookup(data)
+del data
+result = slk_lookup.lookup(
+    lat=-31.89006203575722,
+    lon=115.80183730752809,
+    cwy=mlr.Cwy["L"] | mlr.Cwy["R"],
+    network_type=mlr.NetworkType["State Road"] | mlr.NetworkType["Local Road"] 
+)
 
-xx = megalinref.data_handling._download_fresh_data_as_json(chunk_limit=None))
-
-slk_lookup = SLKLookup(xx)
-
-(road, cwy, slk) = slk_lookup.lookup(lat=-31.956598, lon=115.8773259)
+assert retult == {
+    'feature': {
+        'ROAD': 'H016',
+        'CWY': 4,
+        'START_SLK': 9.84,
+        'END_SLK': 10.68,
+        'START_TRUE_DIST': 9.84,
+        'END_TRUE_DIST': 10.68,
+        'NETWORK_TYPE': 1
+    },
+    'slk': 9.99999981522603,
+    'true': 9.99999981522603,
+    'distance': 1.064734332392196e-14
+}
 
 ```
+
+> Notable issues:
+> 
+> - cwy is returned in enum form, not as text
+> - network_typ is returned in enum form, not as text
+> - distance is returned in degrees; it needs to be converted
 
 ## 3. Why write a Python Library in Rust?
 
@@ -103,9 +131,19 @@ pip install pytest
 
 ### 4.2. Build using `maturin`
 
+build for testing using
+
 ```console
 maturin develop --release
 ```
+
+or build wheel using
+
+```console
+maturin build --interpreter python
+```
+
+> NOTE: I had to add the `--interpreter python` flag since apparently `maturin` looks for the `py` launcher on the `PATH` and in my case there is no such launcher installed.
 
 ## 5. Previous Projects
 
