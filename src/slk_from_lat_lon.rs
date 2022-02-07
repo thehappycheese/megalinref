@@ -14,6 +14,9 @@ use rayon::prelude::*;
 use crate::datatypes::{
     ExtractedFeature
 };
+use crate::util::{
+    convert_degrees_to_metres
+};
 
 
 
@@ -39,6 +42,10 @@ impl SLKLookup{
         )
     }
 
+    
+    /// A basic one-at-a-time lookup of the closest feature to the given lat/lon
+    /// May be slow for bulk lookups
+    #[pyo3(text_signature = "(lat, lon, cwy, network_type, /)")]
     pub fn lookup(&self, lat:f64, lon:f64, cwy:u8, network_type:u8, py:Python) -> PyResult<PyObject>{
         let pnt = point!(x:lon, y:lat);
 
@@ -70,7 +77,7 @@ impl SLKLookup{
         feature_dict.set_item("feature", feature.properties.to_object(py))?;
         feature_dict.set_item("slk",(feature.properties.slk_from + (feature.properties.slk_to - feature.properties.slk_from) * distance_along_object ).to_object(py))?;
         feature_dict.set_item("true",(feature.properties.true_from + (feature.properties.true_to - feature.properties.true_from) * distance_along_object).to_object(py))?;
-        feature_dict.set_item("distance", distance)?;
+        feature_dict.set_item("distance_metres", convert_degrees_to_metres(distance))?;
         Ok(feature_dict.to_object(py))
     }
 

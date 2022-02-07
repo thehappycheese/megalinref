@@ -8,15 +8,15 @@ Built in Rust ⚙️ for the mega-speed you deserve 😉
    - Previously I implemented a pure Rust server for this purpose; see <https://github.com/thehappycheese/nicklinref_rust>
 
 - [1. Development Progress](#1-development-progress)
-- [Installation](#installation)
-- [2. Usage / Examples](#2-usage--examples)
-- [3. Why write a Python Library in Rust?](#3-why-write-a-python-library-in-rust)
-- [4. Setup for Development](#4-setup-for-development)
-  - [4.1. Initial Setup](#41-initial-setup)
-  - [4.2. Build using `maturin`](#42-build-using-maturin)
-- [5. Previous Projects](#5-previous-projects)
-  - [5.1. linrefreverse](#51-linrefreverse)
-  - [5.2. nicklinref_rust](#52-nicklinref_rust)
+- [2. Installation](#2-installation)
+- [3. Usage / Examples](#3-usage--examples)
+- [4. Why write a Python Library in Rust?](#4-why-write-a-python-library-in-rust)
+- [5. Setup for Development](#5-setup-for-development)
+  - [5.1. Initial Setup](#51-initial-setup)
+  - [5.2. Build using `maturin`](#52-build-using-maturin)
+- [6. Previous Projects](#6-previous-projects)
+  - [6.1. linrefreverse](#61-linrefreverse)
+  - [6.2. nicklinref_rust](#62-nicklinref_rust)
 
 ## 1. Development Progress
 
@@ -42,11 +42,11 @@ This library is in early stages of development. Road map below:
 - [ ] Publish on Conda-Forge with windows binaries
   - [ ] Publish anylinux binaries (if it ever seems like enough people might use the package, or if I need to use it on some cloud platform)
 
-## Installation
+## 2. Installation
 
 See the [releases](https://github.com/thehappycheese/megalinref/releases) page for instructions on how to install each release.
 
-## 2. Usage / Examples
+## 3. Usage / Examples
 
 The interface is currently awful and messy, but it will look something like this:
 
@@ -63,31 +63,24 @@ result = slk_lookup.lookup(
 )
 
 assert retult == {
-    'feature': {
+  'feature': {
         'ROAD': 'H016',
-        'CWY': 4,
+        'CWY': 'Left',
         'START_SLK': 9.84,
         'END_SLK': 10.68,
         'START_TRUE_DIST': 9.84,
         'END_TRUE_DIST': 10.68,
-        'NETWORK_TYPE': 1
+        'NETWORK_TYPE': 'State Road'
     },
     'slk': 9.99999981522603,
     'true': 9.99999981522603,
-    'distance': 1.064734332392196e-14
+    'distance_metres': 1.1852499613658425e-09
 }
-
 ```
 
-> Notable issues:
-> 
-> - cwy is returned in enum form, not as text
-> - network_typ is returned in enum form, not as text
-> - distance is returned in degrees; it needs to be converted
+## 4. Why write a Python Library in Rust?
 
-## 3. Why write a Python Library in Rust?
-
-`megalinref` brings all the functionality of my [previous projects](#5-previous-projects) to into Python
+`megalinref` brings all the functionality of my [previous projects](#6-previous-projects) to into Python
 
 - by the power of a single `import`,
 - without sacrificing any speed to `geopandas`,
@@ -96,9 +89,9 @@ assert retult == {
 
 There are downsides: Building this library using Rust means there will be trouble distributing binaries. Most likely this will only work on x64 Windows for the forseeable future, and distributing the binaries will be difficult. Perhaps it can be deployed to conda-forge.
 
-## 4. Setup for Development
+## 5. Setup for Development
 
-### 4.1. Initial Setup
+### 5.1. Initial Setup
 
 These instructions assume you already have python 3.9+, rust and cargo installed.
 
@@ -129,7 +122,7 @@ And to run the tests in this package we need:
 pip install pytest
 ```
 
-### 4.2. Build using `maturin`
+### 5.2. Build using `maturin`
 
 build for testing using
 
@@ -145,9 +138,9 @@ maturin build --interpreter python
 
 > NOTE: I had to add the `--interpreter python` flag since apparently `maturin` looks for the `py` launcher on the `PATH` and in my case there is no such launcher installed.
 
-## 5. Previous Projects
+## 6. Previous Projects
 
-### 5.1. linrefreverse
+### 6.1. linrefreverse
 
 <https://github.com/thehappycheese/linrefreverse>
 
@@ -158,10 +151,9 @@ maturin build --interpreter python
     - I think i tested and found `rtree` only handles point objects, not lines?? I dont know why it wasn't working
     - pygeos depends on the legendary GEOS C++ package. Pretty sure this handled linestrings and did the job nice and fast. But pygeos is an optional dependancy and you have to set flags in geopandas to enable it as the default backend. Don't like.
 
-### 5.2. nicklinref_rust
+### 6.2. nicklinref_rust
 
 <https://github.com/thehappycheese/nicklinref_rust>
 
 - A pure Rust web service that converts Road Name & SLK into lat/lon
   - This is super fast, but has the drawback of generating lots of network traffic when not running at localhost, and just generally being difficult to deploy. Also, making web requests can sometimes get in the way of the task at hand.
-

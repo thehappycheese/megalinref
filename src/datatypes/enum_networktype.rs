@@ -29,8 +29,21 @@ impl<'a> FromPyObject<'a> for NetworkType{
 }
 
 
+// impl ToPyObject for NetworkType{
+//     fn to_object(&self, py: Python) -> PyObject {
+//         (*self as u32).to_object(py)
+//     }
+// }
+
 impl ToPyObject for NetworkType{
     fn to_object(&self, py: Python) -> PyObject {
-        (*self as u32).to_object(py)
+        match self{
+            NetworkType::State_Road =>                 "State Road".to_object(py),
+            NetworkType::Local_Road =>                 "Local Road".to_object(py),
+            NetworkType::Miscellaneous_Road =>         "Miscellaneous Road".to_object(py),
+            NetworkType::Main_Roads_Controlled_Path => "Main Roads Controlled Path".to_object(py),
+            NetworkType::Proposed_Road =>              "Proposed Road".to_object(py),
+            NetworkType::Crossover =>                  "Crossover".to_object(py),
+        }
     }
 }

@@ -5,7 +5,21 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use super::{Cwy, NetworkType};
 
-
+/// Used to store the properties associated with each LineString in the road network.
+/// 
+/// NOTE: The `FromPyObject` and `ToPyObject` traits are implemented with the hard-coded dict key names:
+/// 
+/// - `"ROAD"`
+/// - `"CWY"`
+/// - `"START_SLK"`
+/// - `"END_SLK"`
+/// - `"START_TRUE_DIST"`
+/// - `"END_TRUE_DIST"`
+/// - `"NETWORK_TYPE"`
+/// 
+/// The python part of this package is responsible for checking that data downloaded 
+/// from the source uses these same property names.
+/// 
 #[derive(Serialize, Deserialize, Clone, PartialEq, PartialOrd)]
 pub struct ExtractedProperties{
     pub road:String,

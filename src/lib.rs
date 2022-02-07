@@ -6,6 +6,7 @@ use pyo3::{prelude::*, types::PyList, types::PyDict};
 
 mod slk_from_lat_lon;
 mod datatypes;
+mod util;
 
 use datatypes::{
     Cwy,
@@ -22,9 +23,9 @@ fn megalinref(py: Python, module: &PyModule) -> PyResult<()> {
     module.add("Cwy", PyDict::from_sequence(
             py, 
             PyList::new(py, &vec![
-                ("L", Cwy::L),
-                ("S", Cwy::S),
-                ("R", Cwy::R),
+                ("L", Cwy::L as u8),
+                ("S", Cwy::S as u8),
+                ("R", Cwy::R as u8),
             ]).to_object(py)
         ).unwrap()
     )?;
@@ -33,12 +34,12 @@ fn megalinref(py: Python, module: &PyModule) -> PyResult<()> {
     module.add("NetworkType", PyDict::from_sequence(
             py, 
             PyList::new(py, &vec![
-                ("State Road",                 NetworkType::State_Road),
-                ("Local Road",                 NetworkType::Local_Road),
-                ("Miscellaneous Road",         NetworkType::Miscellaneous_Road),
-                ("Main Roads Controlled_Path", NetworkType::Main_Roads_Controlled_Path),
-                ("Proposed Road",              NetworkType::Proposed_Road),
-                ("Crossover",                  NetworkType::Crossover),
+                ("State Road",                 NetworkType::State_Road as u8),
+                ("Local Road",                 NetworkType::Local_Road as u8),
+                ("Miscellaneous Road",         NetworkType::Miscellaneous_Road as u8),
+                ("Main Roads Controlled_Path", NetworkType::Main_Roads_Controlled_Path as u8),
+                ("Proposed Road",              NetworkType::Proposed_Road as u8),
+                ("Crossover",                  NetworkType::Crossover as u8),
             ]).to_object(py)
         ).unwrap()
     )?;

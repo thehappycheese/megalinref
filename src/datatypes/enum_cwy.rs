@@ -32,8 +32,18 @@ impl<'a> FromPyObject<'a> for Cwy{
     }
 }
 
+// impl ToPyObject for Cwy{
+//     fn to_object(&self, py: Python) -> PyObject {
+//         (*self as u32).to_object(py)
+//     }
+// }
+
 impl ToPyObject for Cwy{
     fn to_object(&self, py: Python) -> PyObject {
-        (*self as u32).to_object(py)
+        match self{
+            Cwy::L => "Left".to_object(py),
+            Cwy::S => "Single".to_object(py),
+            Cwy::R => "Right".to_object(py),
+        }
     }
 }
