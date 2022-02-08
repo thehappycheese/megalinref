@@ -26,15 +26,16 @@ This library is in early stages of development. Road map below:
 - [x] Get data downloaded in python
 - [x] Get GeoJSON passed into rust data structure
   - [x] Get rust to serialize and compress its internal data structure
+  - [ ] Confirm binary caching is working
 - [ ] Get reverse spatial lookup working
   - [ ] Insert geometry into some sort of RTree structure
     - [ ] Make it actually perform as fast as I expected :( this is turning out to be pretty hard.
   - [x] Gave up on the RTree structure, brute force parallel with `rayon` works better :/
     - Available libraries in the ecosystem (I tried `rstar`) seem ill equipped to deal with ~ 250 MB of linestrings. The memory usage just explodes beyond reasonable limits (5GB+) and I was not able to insert the entire road network.
     - I don't really want to try the rust `GEOS` bindings. I doubt I can do any better than the already existing `shapely` library if I must resort to that.
-  - [ ] map lat/lon to Road/Cwy/SLK, one point at a time
+  - [x] map lat/lon to Road/Cwy/SLK, one point at a time
   - [ ] map lat/lon to Road/Cwy/SLK, from numpy array of coordinates
-  - [ ] implement filters for state road / cwy etc
+  - [x] implement filters for state road / cwy etc
 - [ ] Get forward spatial lookup working
   - [ ] Build hash table based on road number
   - [ ] map Road/Cwy/SLK to lat/lon, one point at a time

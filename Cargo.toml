@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 python-source = "python"
 
 [dependencies]
-geo-types = {version = "0.7" ,  features=["use-rstar", "rstar"]}
+geo-types = {version = "0.7"}
 geo       = {version = "0.18",  features = ["use-serde"]}
 pyo3      = {version = "0.15",  features = ["extension-module"]}
 serde     = {version = "1.0"}
