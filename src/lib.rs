@@ -37,7 +37,7 @@ fn megalinref(py: Python, module: &PyModule) -> PyResult<()> {
                 ("State Road",                 NetworkType::State_Road as u8),
                 ("Local Road",                 NetworkType::Local_Road as u8),
                 ("Miscellaneous Road",         NetworkType::Miscellaneous_Road as u8),
-                ("Main Roads Controlled_Path", NetworkType::Main_Roads_Controlled_Path as u8),
+                ("Main Roads Controlled Path", NetworkType::Main_Roads_Controlled_Path as u8),
                 ("Proposed Road",              NetworkType::Proposed_Road as u8),
                 ("Crossover",                  NetworkType::Crossover as u8),
             ]).to_object(py)

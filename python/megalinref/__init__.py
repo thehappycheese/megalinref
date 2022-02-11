@@ -1,3 +1,4 @@
+from typing import Dict
 from .megalinref import (
     SLKLookup,
     Cwy as _internal_cwy,
@@ -5,18 +6,18 @@ from .megalinref import (
 )
 from ._data_handling import download_fresh_data_as_json
 
-Cwy:dict[str, int] = {
-    "Left":   _internal_cwy["Left"],
-    "Single": _internal_cwy["Single"],
-    "Right":  _internal_cwy["Right"],
-    "L":      _internal_cwy["Left"],
-    "S":      _internal_cwy["Single"],
-    "R":      _internal_cwy["Right"],
+Cwy:Dict[str, int] = {
+    "Left":   _internal_cwy["L"],
+    "Single": _internal_cwy["S"],
+    "Right":  _internal_cwy["R"],
+    "L":      _internal_cwy["L"],
+    "S":      _internal_cwy["S"],
+    "R":      _internal_cwy["R"],
 
     "All":    (
-        _internal_cwy["Left"] |
-        _internal_cwy["Single"] |
-        _internal_cwy["Right"]
+        _internal_cwy["L"] |
+        _internal_cwy["S"] |
+        _internal_cwy["R"]
     ),
 }
 """
@@ -41,7 +42,8 @@ sl.lookup(
 
 
 
-NetworkType:dict[str, int] = {
+
+NetworkType:Dict[str, int] = {
     "State Road":                 _internal_network_type["State Road"],
     "Local Road":                 _internal_network_type["Local Road"],
     "Miscellaneous Road":         _internal_network_type["Miscellaneous Road"],

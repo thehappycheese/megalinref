@@ -9,3 +9,5 @@ Cargo.lock
 .env/
 __pycache__/
 .pytest_cache/
+
+*-checkpoint.*
