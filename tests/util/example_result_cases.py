@@ -10,8 +10,8 @@ example_result_cases = [
         "expected_result":{
             "feature":{
                 "ROAD": "H016",
-                "CWY": 0b0000_0100, #"Left",
-                "NETWORK_TYPE": 0b0000_0001,#"State Road",
+                "CWY": "Left",
+                "NETWORK_TYPE": "State Road",
             },
             "slk":10,
             "true":10,

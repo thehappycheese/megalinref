@@ -13,8 +13,14 @@ repository      = "https://github.com/thehappycheese/megalinref"
 requires = ["maturin>=0.12,<0.13"]
 build-backend = "maturin"
 
+[project.optional-dependencies]
+tests = [
+    'pytest',
+    'dictdiffer=0.9'
+]
+
 [tool.pytest.ini_options]
-addopts = "-q -ra"
+addopts = "-q -ra --tb=short"
 testpaths = [
     "tests"
 ]

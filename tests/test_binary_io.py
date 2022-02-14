@@ -1,9 +1,9 @@
 
 import json
-import math
 import os
 
 from util.example_result_cases import example_result_cases
+from util.dictdiffer_tools import assert_dictdiffer
 
 
 def test_init_from_dict():
@@ -37,22 +37,9 @@ def get_test_road_network_as_dict():
 
 def confirm_test_cases_with_instance(instance, test_result_cases):
     for case in test_result_cases:
-        expected_result = case["expected_result"]
-
-        result = instance.lookup(**case["args"])
-        assert all(
-            result["feature"][item] == expected_result["feature"][item]
-            for item in ["ROAD", "CWY", "NETWORK_TYPE"]
-        )
-        assert all(
-            math.isclose(
-                result[item],
-                expected_result[item],
-                abs_tol=0.01
-            )
-            for item in [
-                "slk",
-                "true",
-                # "distance_metres",
-            ]
+        assert_dictdiffer(
+            result_dict                 = instance.lookup(**case["args"]),
+            expected_result_dict_subset = case["expected_result"],
+            expected_result_is_subset=True,
+            absolute_tolerance=0.001
         )
