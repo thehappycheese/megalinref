@@ -1,6 +1,6 @@
 import megalinref as mlr
 
-test_result_cases = [
+example_result_cases = [
     {
         "args":{
             "lat":          -31.89006203575722,

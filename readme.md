@@ -49,33 +49,35 @@ See the [releases](https://github.com/thehappycheese/megalinref/releases) page f
 
 ## 3. Usage / Examples
 
-The interface is currently awful and messy, but it will look something like this:
+The following is subject to change in future releases:
 
 ```python
 import megalinref as mlr
-data = mlr.download_fresh_data_as_json()
+
+data       = mlr.download_fresh_data_as_json()
+
 slk_lookup = mlr.SLKLookup(data)
-del data
-result = slk_lookup.lookup(
+
+result     = slk_lookup.lookup(
     lat=-31.89006203575722,
     lon=115.80183730752809,
     cwy=mlr.Cwy["L"] | mlr.Cwy["R"],
     network_type=mlr.NetworkType["State Road"] | mlr.NetworkType["Local Road"] 
 )
 
-assert retult == {
-  'feature': {
+assert result == {
+    'feature': {
         'ROAD': 'H016',
-        'CWY': 'Left',
+        'CWY': 4,
         'START_SLK': 9.84,
         'END_SLK': 10.68,
         'START_TRUE_DIST': 9.84,
         'END_TRUE_DIST': 10.68,
-        'NETWORK_TYPE': 'State Road'
+        'NETWORK_TYPE': 1
     },
     'slk': 9.99999981522603,
     'true': 9.99999981522603,
-    'distance_metres': 1.1852499613658425e-09
+    'distance': 1.064734332392196e-14
 }
 ```
 
@@ -148,9 +150,9 @@ maturin build --interpreter python
 - a python library to convert lat/lon to SLK
   - It is slow and uses loads of ram.
   - It depends on `geopandas` `SpatialIndex.nearest()` which in turn depends on `pygeos` or `rtree`.
-    - Geopandas itself seems to hog tonnes of ram somehow
+    - `geopandas` itself seems to hog tonnes of ram somehow
     - I think i tested and found `rtree` only handles point objects, not lines?? I dont know why it wasn't working
-    - pygeos depends on the legendary GEOS C++ package. Pretty sure this handled linestrings and did the job nice and fast. But pygeos is an optional dependancy and you have to set flags in geopandas to enable it as the default backend. Don't like.
+    - pygeos depends on the legendary `GEOS` C++ package. Pretty sure this handled linestrings and did the job nice and fast. But `pygeos` is an optional dependancy and you have to set flags in `geopandas` to enable it as the default backend. Don't like.
 
 ### 6.2. nicklinref_rust
 

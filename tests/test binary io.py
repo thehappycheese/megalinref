@@ -3,7 +3,7 @@ import json
 import math
 
 
-from .util.test_result_cases import test_result_cases
+from .util.example_result_cases import example_result_cases
 
 
 def init_from_json():
@@ -23,7 +23,7 @@ def init_from_binary():
 
 def test_cases_from_json_init():
     slk_lookup = init_from_json()
-    confirm_test_cases_with_instance(slk_lookup, test_result_cases)
+    confirm_test_cases_with_instance(slk_lookup, example_result_cases)
 
 
 def test_cases_from_json_init():
@@ -31,7 +31,7 @@ def test_cases_from_json_init():
     slk_lookup = init_from_json()
     bincode = slk_lookup.to_binary()
     slk_lookup = SLKLookup.from_binary(bincode)
-    confirm_test_cases_with_instance(slk_lookup, test_result_cases)
+    confirm_test_cases_with_instance(slk_lookup, example_result_cases)
 
 
 def confirm_test_cases_with_instance(instance:SLKLookup, test_result_cases):
