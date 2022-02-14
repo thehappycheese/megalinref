@@ -107,6 +107,12 @@ python -m venv .env
 .\.env\Scripts\activate
 ```
 
+or on linux
+
+```bash
+. .env/bin/activate
+```
+
 Next we need a build tool called maturin (see documentation [PyO3/maturin](https://github.com/PyO3/maturin)) installed into the virtual environment.
 
 ```console
@@ -126,6 +132,16 @@ pip install pytest
 ```
 
 ### 5.2. Build using `maturin`
+
+To build on Amazon Linux Container:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+sudo yum update
+sudo yum groupinstall "Development Tools"
+```
+
+For windows follow the guidance to install Rust on the Rust website.
 
 build for testing using
 
