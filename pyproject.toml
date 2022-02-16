@@ -2,7 +2,7 @@
 name            = "megalinref"
 description     = "Find SLK and Road Number from lat/lon (and vice versa) using Main Roads Western Australia open data portal data."
 readme          = "readme.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 author = "Nicholas Archer"
 dependencies = ["pandas", "requests", "arcgis2geojson"]
 
@@ -16,7 +16,7 @@ build-backend = "maturin"
 [project.optional-dependencies]
 tests = [
     'pytest',
-    'dictdiffer=0.9'
+    'dictdiffer==0.9'
 ]
 
 [tool.pytest.ini_options]

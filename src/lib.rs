@@ -4,7 +4,7 @@ extern crate pyo3;
 
 use pyo3::{prelude::*, types::PyList, types::PyDict};
 
-mod slk_from_lat_lon;
+mod lookup;
 mod datatypes;
 mod util;
 
@@ -12,7 +12,7 @@ use datatypes::{
     Cwy,
     NetworkType
 };
-use slk_from_lat_lon::SLKLookup;
+use lookup::Lookup;
 
 
 /// My Module test documentation
@@ -23,9 +23,9 @@ fn megalinref(py: Python, module: &PyModule) -> PyResult<()> {
     module.add("Cwy", PyDict::from_sequence(
             py, 
             PyList::new(py, &vec![
-                ("L", Cwy::L as u8),
-                ("S", Cwy::S as u8),
-                ("R", Cwy::R as u8),
+                ("L", Cwy::Left as u8),
+                ("S", Cwy::Single as u8),
+                ("R", Cwy::Right as u8),
             ]).to_object(py)
         ).unwrap()
     )?;
@@ -44,7 +44,7 @@ fn megalinref(py: Python, module: &PyModule) -> PyResult<()> {
         ).unwrap()
     )?;
 
-    module.add_class::<SLKLookup>()?;
+    module.add_class::<Lookup>()?;
 
     Ok(())
 }

@@ -7,18 +7,18 @@ from util.dictdiffer_tools import assert_dictdiffer
 
 
 def test_init_from_dict():
-    from megalinref import SLKLookup
+    from megalinref import Lookup
     road_network = get_test_road_network_as_dict()
-    slk_lookup = SLKLookup(road_network)
+    slk_lookup = Lookup.from_dict(road_network)
     confirm_test_cases_with_instance(slk_lookup, example_result_cases)
 
 
 def test_cases_from_json_init():
-    from megalinref import SLKLookup
+    from megalinref import Lookup
     road_network = get_test_road_network_as_dict()
-    slk_lookup = SLKLookup(road_network)
+    slk_lookup = Lookup.from_dict(road_network)
     bincode = slk_lookup.to_binary()
-    slk_lookup = SLKLookup.from_binary(bincode)
+    slk_lookup = Lookup.from_binary(bincode)
     confirm_test_cases_with_instance(slk_lookup, example_result_cases)
 
 
@@ -38,8 +38,8 @@ def get_test_road_network_as_dict():
 def confirm_test_cases_with_instance(instance, test_result_cases):
     for case in test_result_cases:
         assert_dictdiffer(
-            result_dict                 = instance.lookup(**case["args"]),
-            expected_result_dict_subset = case["expected_result"],
-            expected_result_is_subset=True,
-            absolute_tolerance=0.001
+            result                    = instance.road_slk_from_coordinate(**case["args"]),
+            expected_result           = case["expected_result"],
+            check_unexpected_added    = False, # don't bother reporting additional outputs for now.
+            absolute_tolerance        = 0.001
         )

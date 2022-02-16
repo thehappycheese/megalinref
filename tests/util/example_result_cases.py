@@ -4,7 +4,7 @@ example_result_cases = [
         "args":{
             "lat":          -31.89006203575722,
             "lon":          115.80183730752809,
-            "cwy":          0b1111_1111, # megalinref.Cwy["All"],
+            "carriageways": 0b1111_1111, # megalinref.Cwy["All"],
             "network_type": 0b1111_1111, # megalinref.NetworkType["All"],
         },
         "expected_result":{

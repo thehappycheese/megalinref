@@ -1,6 +1,6 @@
 from typing import Dict
 from .megalinref import (
-    SLKLookup,
+    Lookup,
     Cwy as _internal_cwy,
     NetworkType as _internal_network_type,
 )
@@ -31,7 +31,7 @@ combined using bitwise operators.
 ```python
 from megalinref import SLKLookup, Cwy
 
-sl = SLKLookup(...)
+sl = Lookup(...)
 
 sl.lookup(
     ...,
