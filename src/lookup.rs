@@ -4,6 +4,7 @@ use geo::line_interpolate_point::LineInterpolatePoint;
 use geo::line_locate_point::LineLocatePoint;
 use geo::{point};
 use geo::prelude::EuclideanDistance;
+use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDict, PyTuple, PyList};
 
@@ -15,20 +16,30 @@ use serde::{Serialize, Deserialize};
 use crate::datatypes::{ExtractedFeature, RoadSectionsByCarriageway};
 use crate::util::convert_degrees_to_metres;
 
-use std::collections::HashMap;
-use std::collections::hash_map::Entry;
+use std::collections::BTreeMap;
+use std::collections::btree_map::Entry;
 
 
 
 #[pyclass]
-#[derive(Serialize, Deserialize)]
+// #[derive(Serialize, Deserialize)]  <<<<<<<<<<<<<<<<< THIS WAS THE PROBLEM. APPARENTLY CANT HAVE THIS.?>?????
 pub struct Lookup {
     features: Vec<ExtractedFeature>,
-    index: HashMap<String, RoadSectionsByCarriageway>,
+    //index: BTreeMap<String, RoadSectionsByCarriageway>,
 }
 
 #[pymethods]
 impl Lookup {
+
+    #[new]
+    pub fn new(py:Python) -> Self {
+        py.run("print('dummy')", None, None).unwrap();
+        Lookup {
+            features: Vec::new(),
+            //index: BTreeMap::new(),
+        }
+    }
+
     /// (lat, lon, cwy, network_type, /)
     /// --
     ///
@@ -94,127 +105,174 @@ impl Lookup {
         Ok(feature_dict.to_object(py))
     }
 
-    pub fn coordinate_from_road_slk(
-        &self,
-        road: &str,
-        slk: f64,
-        carriageways: u8,
-        py: Python,
-    ) -> PyResult<PyObject> {
-        let list_of_lists:Vec<PyObject> = self
-            .index
-            .get(road)
-            .unwrap()
-            .iter_matching_carriageways(carriageways)
-            .filter_map(|(_cwy, index_range)| {
-                let list_of_points:Vec<PyObject> = self
-                .features[index_range]
-                .into_iter()
-                .filter_map(|feature|{
-                    if feature.properties.slk_from <= slk && slk <= feature.properties.slk_to {
-                        let fraction = (slk - feature.properties.slk_from) / (feature.properties.slk_to - feature.properties.slk_from);
-                        match feature.geometry.0.line_interpolate_point(fraction){
-                            Some(coordinate) => Some(PyTuple::new(py, &[coordinate.x().to_object(py), coordinate.y().to_object(py)]).to_object(py)),
-                            None=>None
-                        }
-                    }else{
-                        None
-                    }
-                })
-                .collect();
-                Some(PyList::new(py, list_of_points).to_object(py))
-            }).collect();
-        Ok(PyList::new(py, list_of_lists).into())
+    // pub fn coordinate_from_road_slk(
+    //     &self,
+    //     road: &str,
+    //     slk: f64,
+    //     carriageways: u8,
+    //     py: Python,
+    // ) -> PyResult<PyObject> {
+    //     let list_of_lists:Vec<PyObject> = self
+    //         .index
+    //         .get(road)
+    //         .unwrap()
+    //         .iter_matching_carriageways(carriageways)
+    //         .filter_map(|(_cwy, index_range)| {
+    //             let list_of_points:Vec<PyObject> = self
+    //             .features[index_range]
+    //             .into_iter()
+    //             .filter_map(|feature|{
+    //                 if feature.properties.slk_from <= slk && slk <= feature.properties.slk_to {
+    //                     let fraction = (slk - feature.properties.slk_from) / (feature.properties.slk_to - feature.properties.slk_from);
+    //                     match feature.geometry.0.line_interpolate_point(fraction){
+    //                         Some(coordinate) => Some(PyTuple::new(py, &[coordinate.x().to_object(py), coordinate.y().to_object(py)]).to_object(py)),
+    //                         None=>None
+    //                     }
+    //                 }else{
+    //                     None
+    //                 }
+    //             })
+    //             .collect();
+    //             Some(PyList::new(py, list_of_points).to_object(py))
+    //         }).collect();
+    //     Ok(PyList::new(py, list_of_lists).into())
         
-    }
+    // }
 
-    pub fn to_binary(&self, py: Python) -> PyResult<PyObject> {
-        let encoded = bincode::serialize(&self).unwrap();
-        let result;
-        result = PyBytes::new_with(py, encoded.len(), |buffer| {
-            buffer.copy_from_slice(&encoded);
-            Ok(())
-        });
-        let result = result.unwrap();
-        Ok(result.to_object(py))
-    }
+    // pub fn to_binary(&self, py: Python) -> PyResult<PyObject> {
+    //     let encoded = bincode::serialize(&self).unwrap();
+    //     let result;
+    //     result = PyBytes::new_with(py, encoded.len(), |buffer| {
+    //         buffer.copy_from_slice(&encoded);
+    //         Ok(())
+    //     });
+    //     let result = result.unwrap();
+    //     Ok(result.to_object(py))
+    // }
+
+    // #[staticmethod]
+    // pub fn from_binary(input: &PyBytes) -> PyResult<Self> {
+    //     let lookup:Self = bincode::deserialize(input.as_bytes()).unwrap();
+    //     Ok(lookup)
+    // }
 
     #[staticmethod]
-    pub fn from_binary(input: &PyBytes) -> PyResult<Self> {
-        let lookup:Self = bincode::deserialize(input.as_bytes()).unwrap();
-        Ok(lookup)
-    }
+    pub fn from_dict(python_dictionary: &PyDict, py:Python) -> PyResult<Self> {
+        py.run("print('extracting features key')", None, None)?;
+        Ok(Self::new(py))
 
-    #[staticmethod]
-    pub fn from_dict(python_dictionary: &PyDict) -> PyResult<Self> {
-        let mut features: Vec<ExtractedFeature> = python_dictionary
-            .get_item("features")
-            .unwrap()
-            .extract::<Vec<&PyAny>>()?
-            .into_iter()
-            .map(|feature| feature.extract::<ExtractedFeature>().unwrap())
-            .collect();
+        // let features = match python_dictionary.get_item("features"){
+        //     Some(features) => Ok(features),
+        //     None=>Err(PyValueError::new_err("No features found in dictionary"))
+        // }?;
+        // py.run("print('extracting list')", None, None)?;
+
+        // let features =  match features.cast_as::<PyList>(){
+        //     Ok(features) => Ok(features),
+        //     Err(_)=>Err(PyValueError::new_err("Features must be a list"))
+        // }?;
+        // py.run("print('Extracting ExtractedFeature')", None, None)?;
+        // let features = features.extract::<Vec<ExtractedFeature>>()?;
+
         
         // Notes:
         // - .sort() is stable; order of equal elements is preserved.
         // - The order of input elements is currently unknown.
         // - the sorted Ord trait of ExtractedFeature currently does not look at slk or true.
-        features.sort(); 
+        //features.sort(); 
 
-        let index = Self::build_index(&features);
-
-        Ok(Self { features, index })
-    }
-
-
-    pub fn get_index(&self, py:Python)-> PyResult<PyObject>{
-        let index_dict = PyDict::new(py);
-        for (key, value) in &self.index {
-            index_dict.set_item(key, value.to_object(py))?;
-        }
-        Ok(index_dict.to_object(py))
-    }
+        //let mut index = BTreeMap::new();
         
-}
-
-impl Lookup {
-    fn build_index(features: & Vec<ExtractedFeature>) -> HashMap<String, RoadSectionsByCarriageway> {
-        let mut result:HashMap<String, RoadSectionsByCarriageway> = HashMap::new();
+        
 
         // result.insert("".into(), RoadSectionsByCarriageway::new(Some((1,2)), None, None));
         // return result;
 
-        let mut current_slice_start = 0;
+        // let mut current_slice_start = 0;
 
-        for i in 1..features.len() {
-            let a_feature = &features[i-1];
-            let b_feature = &features[i];
-            let b_feature_is_new_road = a_feature.properties.road != b_feature.properties.road;
-            let b_feature_is_new_cwy  = a_feature.properties.cwy  != b_feature.properties.cwy;
+        // for i in 1..20 {
+        //     let a_feature = &features[i-1];
+        //     let b_feature = &features[i];
+        //     let b_feature_is_new_road = a_feature.properties.road != b_feature.properties.road;
+        //     let b_feature_is_new_cwy  = a_feature.properties.cwy  != b_feature.properties.cwy;
             
-            if b_feature_is_new_road || b_feature_is_new_cwy {
-                // the into() function on the next line is doing magic that I don't quite understand. Maybe its better than my previous solution which was .clone() ?
-                match result.entry(b_feature.properties.road.clone()) {
-                    Entry::Vacant(e) => {
-                        e.insert(RoadSectionsByCarriageway::new_from_cwy(
-                            &a_feature.properties.cwy,
-                            (current_slice_start, i),
-                        ));
-                    }
-                    Entry::Occupied(mut e) => {
-                        e.insert(
-                            e
-                            .get()
-                            .with_updated_cwy(
-                                &a_feature.properties.cwy,
-                                 (current_slice_start, i)
-                            ),
-                        );
-                    }
-                }
-                current_slice_start = i;
-            }
-        }
-        result
+        //     if b_feature_is_new_road || b_feature_is_new_cwy {
+        //         match index.entry(b_feature.properties.road.clone()) {
+        //             Entry::Vacant(e) => {
+        //                 e.insert(RoadSectionsByCarriageway::new_from_cwy(
+        //                     &a_feature.properties.cwy,
+        //                     (current_slice_start, i),
+        //                 ));
+        //             }
+        //             Entry::Occupied(mut e) => {
+        //                 e.insert(
+        //                     e
+        //                     .get()
+        //                     .with_updated_cwy(
+        //                         &a_feature.properties.cwy,
+        //                          (current_slice_start, i)
+        //                     ),
+        //                 );
+        //             }
+        //         }
+        //         current_slice_start = i;
+        //     }
+        // }
+        
+        // Ok(Self {
+        //     features,
+        //     // index
+        // })
     }
+
+
+    // pub fn get_index(&self, py:Python)-> PyResult<PyObject>{
+    //     let index_dict = PyDict::new(py);
+    //     for (key, value) in &self.index {
+    //         index_dict.set_item(key, value.to_object(py))?;
+    //     }
+    //     Ok(index_dict.to_object(py))
+    // }
+
+    // fn build_index(features: & Vec<ExtractedFeature>) -> BTreeMap<String, RoadSectionsByCarriageway> {
+    //     let mut index = BTreeMap::new();
+        
+        
+
+    //     // result.insert("".into(), RoadSectionsByCarriageway::new(Some((1,2)), None, None));
+    //     // return result;
+
+    //     let mut current_slice_start = 0;
+
+    //     for i in 1..20 {
+    //         let a_feature = &features[i-1];
+    //         let b_feature = &features[i];
+    //         let b_feature_is_new_road = a_feature.properties.road != b_feature.properties.road;
+    //         let b_feature_is_new_cwy  = a_feature.properties.cwy  != b_feature.properties.cwy;
+            
+    //         if b_feature_is_new_road || b_feature_is_new_cwy {
+    //             match index.entry(b_feature.properties.road.clone()) {
+    //                 Entry::Vacant(e) => {
+    //                     e.insert(RoadSectionsByCarriageway::new_from_cwy(
+    //                         &a_feature.properties.cwy,
+    //                         (current_slice_start, i),
+    //                     ));
+    //                 }
+    //                 Entry::Occupied(mut e) => {
+    //                     e.insert(
+    //                         e
+    //                         .get()
+    //                         .with_updated_cwy(
+    //                             &a_feature.properties.cwy,
+    //                              (current_slice_start, i)
+    //                         ),
+    //                     );
+    //                 }
+    //             }
+    //             current_slice_start = i;
+    //         }
+    //     }
+    //     index
+    // }
+        
 }
