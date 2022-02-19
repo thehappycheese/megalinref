@@ -2,11 +2,11 @@ use pyo3::{
     types::{PyDict, PyTuple},
     PyObject, Python, ToPyObject,
 };
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 
 use super::Cwy;
 
-#[derive(Serialize, Deserialize)]
+//#[derive(Serialize, Deserialize)]
 pub struct RoadSectionsByCarriageway {
     left: Option<(usize, usize)>,
     single: Option<(usize, usize)>,
@@ -15,9 +15,9 @@ pub struct RoadSectionsByCarriageway {
 
 impl RoadSectionsByCarriageway {
     pub fn new(
-        left: Option<(usize, usize)>,
+        left:   Option<(usize, usize)>,
         single: Option<(usize, usize)>,
-        right: Option<(usize, usize)>,
+        right:  Option<(usize, usize)>,
     ) -> Self {
         Self {
             left,
@@ -27,15 +27,15 @@ impl RoadSectionsByCarriageway {
     }
     pub fn new_from_cwy(cwy: &Cwy, range: (usize, usize)) -> Self {
         match cwy {
-            Cwy::Left => Self::new(Some(range), None, None),
-            Cwy::Right => Self::new(None, Some(range), None),
+            Cwy::Left   => Self::new(Some(range), None, None),
+            Cwy::Right  => Self::new(None, Some(range), None),
             Cwy::Single => Self::new(None, None, Some(range)),
         }
     }
     pub fn with_updated_cwy(&self, cwy: &Cwy, range: (usize, usize)) -> Self {
         match cwy {
-            Cwy::Left => Self::new(Some(range), self.right, self.single),
-            Cwy::Right => Self::new(self.left, Some(range), self.single),
+            Cwy::Left   => Self::new(Some(range), self.right, self.single),
+            Cwy::Right  => Self::new(self.left, Some(range), self.single),
             Cwy::Single => Self::new(self.left, self.right, Some(range)),
         }
     }

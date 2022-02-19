@@ -1,8 +1,11 @@
 
 use pyo3::{ToPyObject, PyObject, Python, FromPyObject, PyResult, PyAny};
-use serde::{Serialize, Deserialize};
+//use serde::{Serialize, Deserialize};
 
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
+#[derive(
+    //Serialize, Deserialize,
+    Copy, Clone,  PartialEq, PartialOrd
+)]
 #[allow(non_camel_case_types)]
 pub enum NetworkType {
     State_Road                 = 0b0000_0001,
@@ -15,16 +18,19 @@ pub enum NetworkType {
 
 
 impl<'a> FromPyObject<'a> for NetworkType{
-    fn extract(ob: &'a PyAny) -> PyResult<Self> {
-        ob.extract::<&str>().map(|x| match x {
-            "State Road" => NetworkType::State_Road,
-            "Local Road" => NetworkType::Local_Road,
-            "Miscellaneous Road" => NetworkType::Miscellaneous_Road,
-            "Main Roads Controlled Path" => NetworkType::Main_Roads_Controlled_Path,
-            "Proposed Road" => NetworkType::Proposed_Road,
-            "Crossover" => NetworkType::Crossover,
-            _ => panic!("Invalid value for NetworkType")
-        })
+    fn extract(input: &'a PyAny) -> PyResult<Self> {
+        let result = match input.extract::<&str>(){   
+            "State Road"                 => Ok(NetworkType::State_Road),
+            "Local Road"                 => Ok(NetworkType::Local_Road),
+            "Miscellaneous Road"         => Ok(NetworkType::Miscellaneous_Road),
+            "Main Roads Controlled Path" => Ok(NetworkType::Main_Roads_Controlled_Path),
+            "Proposed Road"              => Ok(NetworkType::Proposed_Road),
+            "Crossover"                  => Ok(NetworkType::Crossover),
+            _                            => return Err(pyo3::exceptions::PyException::new_err(
+                "Invalid value for NetworkType"
+            ))
+        }
+        result
     }
 }
 

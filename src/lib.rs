@@ -23,9 +23,14 @@ fn megalinref(py: Python, module: &PyModule) -> PyResult<()> {
     module.add("Cwy", PyDict::from_sequence(
             py, 
             PyList::new(py, &vec![
-                ("L", Cwy::Left as u8),
+                ("L", Cwy::Left   as u8),
                 ("S", Cwy::Single as u8),
-                ("R", Cwy::Right as u8),
+                ("R", Cwy::Right  as u8),
+
+                ("LS",  (Cwy::Left  as u8) | (Cwy::Single as u8)),
+                ("RS",  (Cwy::Right as u8) | (Cwy::Single as u8)),
+                ("LR",  (Cwy::Left  as u8) | (Cwy::Right  as u8)),
+                ("LRS", (Cwy::Left  as u8) | (Cwy::Single as u8) | (Cwy::Right as u8)),
             ]).to_object(py)
         ).unwrap()
     )?;
