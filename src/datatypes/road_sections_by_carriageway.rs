@@ -2,11 +2,11 @@ use pyo3::{
     types::{PyDict, PyTuple},
     PyObject, Python, ToPyObject,
 };
-// use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use super::Cwy;
 
-//#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct RoadSectionsByCarriageway {
     left: Option<(usize, usize)>,
     single: Option<(usize, usize)>,

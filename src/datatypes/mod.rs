@@ -14,5 +14,5 @@ pub use extracted_properties::ExtractedProperties;
 mod extracted_feature;
 pub use extracted_feature::ExtractedFeature;
 
-// mod road_sections_by_carriageway;
-// pub use road_sections_by_carriageway::RoadSectionsByCarriageway;
+mod road_sections_by_carriageway;
+pub use road_sections_by_carriageway::RoadSectionsByCarriageway;

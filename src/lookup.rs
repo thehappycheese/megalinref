@@ -1,3 +1,8 @@
+use std::collections::{
+    HashMap,
+    hash_map::{Entry},
+};
+
 use bincode;
 
 
@@ -25,7 +30,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::datatypes::{
     ExtractedFeature,
-//     RoadSectionsByCarriageway,
+    RoadSectionsByCarriageway,
 };
 use crate::util::convert_degrees_to_metres;
 
@@ -36,6 +41,7 @@ use crate::util::convert_degrees_to_metres;
 #[pyclass]
 pub struct Lookup {
     features: Vec<ExtractedFeature>,
+    //index: HashMap<String, Vec<RoadSectionsByCarriageway>>,
 }
 
 #[pymethods]
@@ -47,15 +53,9 @@ impl Lookup {
     }
 
     #[staticmethod]
-    pub fn from_dict(input:Py<PyDict>, py:Python) -> PyResult<Py<Self>> {
-        //py.run("print('silly')",None, None)?;
+    pub fn from_dict(input:&PyDict) -> PyResult<Self> {
 
-
-        let arg_features = input
-            .as_ref(py)
-            .get_item("features");
-        
-        let arg_features = match arg_features {
+        let arg_features = match input.get_item("features") {
             Some(features) => features,
             None => return Err(pyo3::exceptions::PyException::new_err("Unable to extract 'features' from input")),
         };
@@ -69,26 +69,20 @@ impl Lookup {
             return Err(pyo3::exceptions::PyException::new_err("'features' list is empty"));
         }
 
-        let result = Py::new(py, Self{
-            features:Vec::with_capacity(arg_features.len()),
-        })?;
-        {
-            let features:& mut Vec<ExtractedFeature> = & mut result.borrow_mut(py).features;
+        //let mut features = Vec::with_capacity(arg_features.len());
+        let mut features:Vec<ExtractedFeature> = arg_features.iter().map(|feature| match feature.extract::<ExtractedFeature>(){
+            Ok(feature) => Ok(feature),
+            Err(x) => Err(x),
+        }).collect::<PyResult<Vec<ExtractedFeature>>>()?;
 
-            for feature in arg_features.iter() {
-                match feature.extract::<ExtractedFeature>(){
-                    Ok(feature) => features.push(feature),
-                    Err(x) => return Err(x),
-                }
-            }
+        features.sort_by(|a, b| match a.properties.road.cmp(&b.properties.road){
+            std::cmp::Ordering::Equal => a.properties.cwy.cmp(&b.properties.cwy),
+            x => x,
+        });
 
-            features.sort_by(|a, b| match a.properties.road.cmp(&b.properties.road){
-                std::cmp::Ordering::Equal => a.properties.cwy.cmp(&b.properties.cwy),
-                x => x,
-            });
-        }
-
-        Ok(result)
+        Ok(Self{
+            features,
+        })
     }
 
 
@@ -189,5 +183,48 @@ impl Lookup {
         feature_dict.set_item("distance_metres", convert_degrees_to_metres(distance))?;
         
         Ok(feature_dict.to_object(py))
+    }
+}
+
+
+impl Lookup{
+
+    fn build_index(features: & Vec<ExtractedFeature>) -> HashMap<String, RoadSectionsByCarriageway> {
+        let mut index = HashMap::new();
+        
+        // result.insert("".into(), RoadSectionsByCarriageway::new(Some((1,2)), None, None));
+        // return result;
+
+        let mut current_slice_start = 0;
+
+        for i in 1..20 {
+            let a_feature = &features[i-1];
+            let b_feature = &features[i];
+            let b_feature_is_new_road = a_feature.properties.road != b_feature.properties.road;
+            let b_feature_is_new_cwy  = a_feature.properties.cwy  != b_feature.properties.cwy;
+            
+            if b_feature_is_new_road || b_feature_is_new_cwy {
+                match index.entry(b_feature.properties.road.clone()) {
+                    Entry::Vacant(e) => {
+                        e.insert(RoadSectionsByCarriageway::new_from_cwy(
+                            &a_feature.properties.cwy,
+                            (current_slice_start, i),
+                        ));
+                    }
+                    Entry::Occupied(mut e) => {
+                        e.insert(
+                            e
+                            .get()
+                            .with_updated_cwy(
+                                &a_feature.properties.cwy,
+                                 (current_slice_start, i)
+                            ),
+                        );
+                    }
+                }
+                current_slice_start = i;
+            }
+        }
+        index
     }
 }
