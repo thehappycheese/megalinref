@@ -1,6 +1,9 @@
-use pyo3::{ToPyObject, PyObject, Python, FromPyObject, PyResult, PyAny, PyErr, exceptions};
+use pyo3::{
+    ToPyObject, PyObject, Python, 
+    FromPyObject, PyResult, PyAny, PyErr, exceptions
+};
 
-//use serde::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 
 
 // define enum members up here so we don't mix them up when we have to type out the numbers multiple times.
@@ -18,22 +21,25 @@ const CWY_RIGHT:u8  = 0b0000_0001;
 /// So we will use a dict in python to store ints and call it done.
 /// 
 /// ```
-/// Left   = 0b000_0100
-/// Single = 0b000_0010
-/// Right  = 0b000_0001
+/// assert!((Cwy::Left   as u8) == 0b000_0100);
+/// assert!((Cwy::Single as u8) == 0b000_0010);
+/// assert!((Cwy::Right  as u8) == 0b000_0001);
 /// ```
 /// 
 /// > Note: The cwy field is ordered `L` then `S` then `R`
 /// 
 #[derive(
-    //Serialize, Deserialize,
-    Copy, Clone, PartialEq, PartialOrd, Eq, Ord
+    Serialize, Deserialize,
+    Copy, Clone,
+    PartialEq, Eq,
+    PartialOrd, Ord
 )]
 pub enum Cwy {
     Left   = CWY_LEFT   as isize,
     Single = CWY_SINGLE as isize,
     Right  = CWY_RIGHT  as isize,
 }
+
 
 impl TryFrom<&str> for Cwy{
     type Error = PyErr;
@@ -45,28 +51,34 @@ impl TryFrom<&str> for Cwy{
             "L"      => Ok(Cwy::Left),
             "S"      => Ok(Cwy::Single),
             "R"      => Ok(Cwy::Right),
-            _        => Err(exceptions::PyValueError::new_err::<String>("Invalid value for Cwy".into()))
+            _        => Err(exceptions::PyValueError::new_err::<String>("Invalid value for CWY".into()))
         }
     }
 }
 
-impl TryFrom<u8> for Cwy{
-    type Error = PyErr;
-    fn try_from(i: u8) -> PyResult<Self> {
-        match i {
-            CWY_LEFT   => Ok(Cwy::Left),
-            CWY_SINGLE => Ok(Cwy::Single),
-            CWY_RIGHT  => Ok(Cwy::Right),
-            _     => Err(exceptions::PyValueError::new_err::<String>("Invalid value for Cwy".into()))
-        }
-    }
-}
 
 impl<'a> FromPyObject<'a> for Cwy{
     fn extract(ob: &'a PyAny) -> PyResult<Self> {
-        ob.extract::<Cwy>()
+        match ob.extract::<&str>(){
+            Ok(s) => Cwy::try_from(s),
+            Err(_) => return Err(pyo3::exceptions::PyValueError::new_err("'CWY' must be of type str"))
+        }
     }
 }
+
+
+// impl TryFrom<u8> for Cwy{
+//     type Error = PyErr;
+//     fn try_from(i: u8) -> PyResult<Self> {
+//         match i {
+//             CWY_LEFT   => Ok(Cwy::Left),
+//             CWY_SINGLE => Ok(Cwy::Single),
+//             CWY_RIGHT  => Ok(Cwy::Right),
+//             _     => Err(exceptions::PyValueError::new_err::<String>("Invalid value for CWY".into()))
+//         }
+//     }
+// }
+
 
 impl ToPyObject for Cwy{
     fn to_object(&self, py: Python) -> PyObject {

@@ -1,42 +1,16 @@
 use pyo3::prelude::*;
 use pyo3::types::{PyDict};
-//use serde::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 use super::{
-    //ExtractedLineString,
+    ExtractedLineString,
     ExtractedProperties
 };
 
 
-//#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ExtractedFeature {
-    //pub properties:ExtractedProperties,
-    //pub geometry:ExtractedLineString
-}
-
-impl PartialEq for ExtractedFeature {
-    fn eq(&self, other: &Self) -> bool {
-        //self.properties == other.properties
-        return false;
-    }
-}
-
-// PartialOrd is needed to satisfy the Ord trait.
-impl PartialOrd for ExtractedFeature {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        return Some(std::cmp::Ordering::Equal);
-        //Some(self.properties.cmp(&other.properties))
-    }
-}
-
-// Eq is needed to satisfy the Ord trait.
-impl Eq for ExtractedFeature{}
-
-// Allows easy sorting
-impl Ord for ExtractedFeature {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        return std::cmp::Ordering::Equal;
-        //self.properties.cmp(&other.properties)
-    }
+    pub properties:ExtractedProperties,
+    pub geometry:ExtractedLineString
 }
 
 
@@ -61,10 +35,20 @@ impl<'a> FromPyObject<'a> for ExtractedFeature{
             Err(x) => return Err(x),
         };
 
-        //let geometry = dict.get_item("geometry").unwrap().extract::<ExtractedLineString>()?;
+        let geometry = match dict.get_item("geometry"){
+            Some(geometry) => match geometry.extract::<ExtractedLineString>() {
+                Ok(geometry) => geometry,
+                Err(x) => return Err(x),
+            },
+            None => return Err(pyo3::exceptions::PyException::new_err(
+                "Unable to find the 'geometry' item on one of the features."
+            )),
+        };
+            
+        //}.unwrap().extract::<ExtractedLineString>()?;
         Ok(Self{
-            // properties,
-            // geometry
+            properties,
+            geometry
         })
     }
 }

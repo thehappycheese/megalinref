@@ -1,9 +1,16 @@
 
-use pyo3::{ToPyObject, PyObject, Python, FromPyObject, PyResult, PyAny};
-//use serde::{Serialize, Deserialize};
+use pyo3::{
+    ToPyObject,
+    PyObject,
+    Python,
+    FromPyObject,
+    PyResult,
+    PyAny,
+};
+use serde::{Serialize, Deserialize};
 
 #[derive(
-    //Serialize, Deserialize,
+    Serialize, Deserialize,
     Copy, Clone,  PartialEq, PartialOrd
 )]
 #[allow(non_camel_case_types)]
@@ -20,17 +27,20 @@ pub enum NetworkType {
 impl<'a> FromPyObject<'a> for NetworkType{
     fn extract(input: &'a PyAny) -> PyResult<Self> {
         let result = match input.extract::<&str>(){   
-            "State Road"                 => Ok(NetworkType::State_Road),
-            "Local Road"                 => Ok(NetworkType::Local_Road),
-            "Miscellaneous Road"         => Ok(NetworkType::Miscellaneous_Road),
-            "Main Roads Controlled Path" => Ok(NetworkType::Main_Roads_Controlled_Path),
-            "Proposed Road"              => Ok(NetworkType::Proposed_Road),
-            "Crossover"                  => Ok(NetworkType::Crossover),
-            _                            => return Err(pyo3::exceptions::PyException::new_err(
-                "Invalid value for NetworkType"
+            Ok("State Road")                 => NetworkType::State_Road,
+            Ok("Local Road")                 => NetworkType::Local_Road,
+            Ok("Miscellaneous Road")         => NetworkType::Miscellaneous_Road,
+            Ok("Main Roads Controlled Path") => NetworkType::Main_Roads_Controlled_Path,
+            Ok("Proposed Road")              => NetworkType::Proposed_Road,
+            Ok("Crossover")                  => NetworkType::Crossover,
+            Ok(x)                       => return Err(pyo3::exceptions::PyException::new_err(
+                format!("Invalid value for NETWORK_TYPE '{}'", x)
+            )),
+            Err(_)                           => return Err(pyo3::exceptions::PyException::new_err(
+                "Unable to extract NETWORK_TYPE as string"
             ))
-        }
-        result
+        };
+        Ok(result)
     }
 }
 
@@ -40,6 +50,7 @@ impl<'a> FromPyObject<'a> for NetworkType{
 //         (*self as u32).to_object(py)
 //     }
 // }
+
 
 impl ToPyObject for NetworkType{
     fn to_object(&self, py: Python) -> PyObject {

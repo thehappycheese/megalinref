@@ -57,7 +57,7 @@ class Lookup:
         ...
 
     
-    def to_binary() -> bytes:
+    def to_binary(self) -> bytes:
         """Converts the road network data stored in this  into bytes so that it can be 
         saved to disk in a compact format.
         The data can then be restored then restore it with `Lookup.from_binary().`
@@ -90,10 +90,11 @@ class Lookup:
 
 
     def road_slk_from_coordinate(
+        self,
         lat:float,
         lon:float,
-        cwy:int,
-        network_type:int
+        carriageways:int,
+        network_types:int
     ) -> dict[Any, Any]:
         """
         Returns the Road Number and SLK for for the road closest to the given lat/lon coordinate..
@@ -136,6 +137,7 @@ class Lookup:
         ...
 
     def coordinate_from_road_slk(
+        self,
         road:str,
         slk:float,
         carriagways:int

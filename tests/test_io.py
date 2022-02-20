@@ -6,14 +6,14 @@ from util.example_result_cases import example_result_cases
 from util.dictdiffer_tools import assert_dictdiffer
 
 
-def test_init_from_dict():
+def test_from_dict_ok_all_features_multi_test():
     from megalinref import Lookup
     road_network = get_test_road_network_as_dict()
     slk_lookup = Lookup.from_dict(road_network)
     confirm_test_cases_with_instance(slk_lookup, example_result_cases)
 
 
-def test_cases_from_json_init():
+def test_from_binary():
     from megalinref import Lookup
     road_network = get_test_road_network_as_dict()
     slk_lookup = Lookup.from_dict(road_network)
