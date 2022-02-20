@@ -8,7 +8,7 @@ use bincode;
 
 use geo::{
    point,
-   //line_interpolate_point::LineInterpolatePoint,
+   line_interpolate_point::LineInterpolatePoint,
    euclidean_distance::EuclideanDistance,
    line_locate_point::LineLocatePoint,
 };
@@ -20,6 +20,7 @@ use pyo3::{
         PyBytes,
         PyDict,
         PyList,
+        PyTuple
     }
 };
 
@@ -41,7 +42,7 @@ use crate::util::convert_degrees_to_metres;
 #[pyclass]
 pub struct Lookup {
     features: Vec<ExtractedFeature>,
-    //index: HashMap<String, Vec<RoadSectionsByCarriageway>>,
+    index: HashMap<String, RoadSectionsByCarriageway>,
 }
 
 #[pymethods]
@@ -80,8 +81,11 @@ impl Lookup {
             x => x,
         });
 
+        let index = Self::build_index(&features);
+
         Ok(Self{
             features,
+            index
         })
     }
 
@@ -184,6 +188,41 @@ impl Lookup {
         
         Ok(feature_dict.to_object(py))
     }
+
+    pub fn coordinate_from_road_slk(
+        &self,
+        road: &str,
+        slk: f64,
+        carriageways: u8,
+        py: Python,
+    ) -> PyResult<PyObject> {
+        let list_of_lists:Vec<PyObject> = self
+            .index
+            .get(road)
+            .unwrap()
+            .iter_matching_carriageways(carriageways)
+            .filter_map(|(_cwy, index_range)| {
+                let list_of_points:Vec<PyObject> = self
+                .features[index_range]
+                .into_iter()
+                .filter_map(|feature|{
+                    if feature.properties.slk_from <= slk && slk <= feature.properties.slk_to {
+                        let fraction = (slk - feature.properties.slk_from) / (feature.properties.slk_to - feature.properties.slk_from);
+                        match feature.geometry.0.line_interpolate_point(fraction){
+                            Some(coordinate) => Some(PyTuple::new(py, &[coordinate.x().to_object(py), coordinate.y().to_object(py)]).to_object(py)),
+                            None=>None
+                        }
+                    }else{
+                        None
+                    }
+                })
+                .collect();
+                Some(PyList::new(py, list_of_points).to_object(py))
+            }).collect();
+        Ok(PyList::new(py, list_of_lists).into())
+        
+    }
+
 }
 
 
@@ -191,38 +230,41 @@ impl Lookup{
 
     fn build_index(features: & Vec<ExtractedFeature>) -> HashMap<String, RoadSectionsByCarriageway> {
         let mut index = HashMap::new();
-        
-        // result.insert("".into(), RoadSectionsByCarriageway::new(Some((1,2)), None, None));
-        // return result;
 
-        let mut current_slice_start = 0;
-
-        for i in 1..20 {
-            let a_feature = &features[i-1];
-            let b_feature = &features[i];
-            let b_feature_is_new_road = a_feature.properties.road != b_feature.properties.road;
-            let b_feature_is_new_cwy  = a_feature.properties.cwy  != b_feature.properties.cwy;
-            
-            if b_feature_is_new_road || b_feature_is_new_cwy {
-                match index.entry(b_feature.properties.road.clone()) {
-                    Entry::Vacant(e) => {
-                        e.insert(RoadSectionsByCarriageway::new_from_cwy(
-                            &a_feature.properties.cwy,
-                            (current_slice_start, i),
-                        ));
-                    }
-                    Entry::Occupied(mut e) => {
-                        e.insert(
-                            e
-                            .get()
-                            .with_updated_cwy(
+        if features.len() == 1 {
+            index.insert(
+                features[0].properties.road.clone(),
+                RoadSectionsByCarriageway::new_from_cwy(&features[0].properties.cwy, (0usize, 1usize)),
+            );
+        } else {
+            let mut current_slice_start = 0;
+            for i in 0..features.len()-1 {
+                let a_feature = &features[i];
+                let b_feature = &features[i+1];
+                let b_feature_is_new_road = a_feature.properties.road != b_feature.properties.road;
+                let b_feature_is_new_cwy  = a_feature.properties.cwy  != b_feature.properties.cwy;
+                
+                if b_feature_is_new_road || b_feature_is_new_cwy {
+                    match index.entry(a_feature.properties.road.clone()) {
+                        Entry::Vacant(e) => {
+                            e.insert(RoadSectionsByCarriageway::new_from_cwy(
                                 &a_feature.properties.cwy,
-                                 (current_slice_start, i)
-                            ),
-                        );
+                                (current_slice_start, i),
+                            ));
+                        }
+                        Entry::Occupied(mut e) => {
+                            e.insert(
+                                e
+                                .get()
+                                .with_updated_cwy(
+                                    &a_feature.properties.cwy,
+                                        (current_slice_start, i)
+                                ),
+                            );
+                        }
                     }
+                    current_slice_start = i;
                 }
-                current_slice_start = i;
             }
         }
         index

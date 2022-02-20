@@ -1,3 +1,4 @@
+from .dictdiffer_tools import assert_dictdiffer
 
 example_result_cases = [
     {
@@ -20,3 +21,11 @@ example_result_cases = [
     }
 ]
 
+def confirm_test_cases_with_instance(lookup_instance):
+    for case in example_result_cases:
+        assert_dictdiffer(
+            result                    = lookup_instance.road_slk_from_coordinate(**case["args"]),
+            expected_result           = case["expected_result"],
+            check_unexpected_added    = False, # don't bother reporting additional outputs for now.
+            absolute_tolerance        = 0.001
+        )
