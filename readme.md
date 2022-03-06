@@ -53,33 +53,59 @@ See the [releases](https://github.com/thehappycheese/megalinref/releases) page f
 The following is subject to change in future releases:
 
 ```python
-import megalinref as mlr
+from megalinref import Lookup, Cwy, NetworkType, download_fresh_data_as_json
 
-data       = mlr.download_fresh_data_as_json()
+road_network = download_fresh_data_as_json()
+slk_lookup = Lookup.from_dict(road_network)
 
-slk_lookup = mlr.SLKLookup(data)
+# the download step above takes a while,
+# lets cache the lookup object so we don't
+# have to repeat the download next time:
+with open("cached_lookup.bin", "wb") as bin_cache:
+    bin_cache.write(slk_lookup.to_binary())
 
-result     = slk_lookup.lookup(
-    lat=-31.89006203575722,
-    lon=115.80183730752809,
-    cwy=mlr.Cwy["L"] | mlr.Cwy["R"],
-    network_type=mlr.NetworkType["State Road"] | mlr.NetworkType["Local Road"] 
+# For demonstration purposes lets reload 
+# a new copy of `lookup` from the cache
+with open("cached_lookup.bin", "rb") as bin_cache:
+    slk_lookup = Lookup.from_binary(
+        bin_cache.read()
+    )
+
+# lets lookup a road/slk based on a lat/lon
+result = slk_lookup.road_slk_from_coordinate(
+    lat           = -31.89006203575722,
+    lon           = 115.80183730752809,
+    carriageways  = Cwy["L"] | Cwy["R"],
+    network_types = NetworkType["State Road"] | NetworkType["Local Road"] 
 )
-
+result["slk"]             = round(result["slk"],             3)
+result["true"]            = round(result["true"],            3)
+result["distance_metres"] = round(result["distance_metres"], 3)
 assert result == {
     'feature': {
         'ROAD': 'H016',
-        'CWY': 4,
+        'CWY': 'Left',
         'START_SLK': 9.84,
         'END_SLK': 10.68,
         'START_TRUE_DIST': 9.84,
         'END_TRUE_DIST': 10.68,
-        'NETWORK_TYPE': 1
+        'NETWORK_TYPE': 'State Road'
     },
-    'slk': 9.99999981522603,
-    'true': 9.99999981522603,
-    'distance': 1.064734332392196e-14
+    'slk': 10.000,
+    'true': 10.000,
+    'distance_metres': 0.000
 }
+
+# now lets lookup a lat/lon based on a road/slk
+result = slk_lookup.coordinate_from_road_slk(
+    road         = "H016",
+    slk          =8.5,
+    carriageways =Cwy["L"]
+)
+assert result == [[(115.81402235326775, -31.897493888518945)]]
+# the result type will be improved in future; currently you get a list of up to
+# three lists (corresponding with Left, Single and Right Carriageway), each
+# containing one or more coordinates as tuples.
 ```
 
 ## 4. Why write a Python Library in Rust?
