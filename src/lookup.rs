@@ -1,7 +1,7 @@
-use std::collections::{
+use std::{collections::{
     HashMap,
     hash_map::{Entry},
-};
+}};
 
 use bincode;
 
@@ -111,7 +111,7 @@ impl Lookup {
         Ok(result.to_object(py))
     }
 
-
+    /// Exists for basic testing... may remove in the future
     pub fn get_feature_count(&self) -> PyResult<usize> {
         Ok(self.features.len())
     }
@@ -122,10 +122,13 @@ impl Lookup {
         lon: f64,
         carriageways: u8,
         network_types: u8,
+        // roads:Option<Vec<String>> TODO: add filter for roads
         py: Python,
     ) -> PyResult<PyObject> {
 
         let pnt = point!(x: lon, y: lat);
+
+
 
         let lookup_result = self
             .features
@@ -189,11 +192,13 @@ impl Lookup {
         Ok(feature_dict.to_object(py))
     }
 
+    // TODO: implement offset
     pub fn coordinate_from_road_slk(
         &self,
         road: &str,
         slk: f64,
         carriageways: u8,
+        // offset: f64,
         py: Python,
     ) -> PyResult<PyObject> {
         let list_of_lists:Vec<PyObject> = self
@@ -221,6 +226,17 @@ impl Lookup {
             }).collect();
         Ok(PyList::new(py, list_of_lists).into())
         
+    }
+    pub fn linestring_from_road_slk(
+        &self,
+        road: &str,
+        slk_from: f64,
+        slk_to: f64,
+        carriageways: u8,
+        offset: f64,
+        py: Python,
+    ){
+        todo!("Not yet implemented")
     }
 
 }

@@ -1,10 +1,11 @@
 # megalinref - Mega-fast Linear Referencing <!-- omit in toc -->
 
-Python module for converting between lat/lon and road/chainage.
-Built in Rust ⚙️ for the mega-speed you deserve 😉
+Python module for converting between lat / lon and road / chainage.
+
+Uses Rust binaries in the backend for the mega-speed you deserve :)
 
 1. Convert coordinates road number, carriageway and SLKs,
-1. Convert SLK observations converted into coordinates
+2. Convert SLK observations converted into coordinates
    - Previously I implemented a pure Rust server for this purpose; see <https://github.com/thehappycheese/nicklinref_rust>
 
 - [1. Development Progress](#1-development-progress)
@@ -104,10 +105,15 @@ The following commands will create and activate a virtual environment in the fol
 python -m pip install --user --upgrade pip
 python -m pip install --user --upgrade virtualenv
 python -m venv .env
+```
+
+Activate the new environment on windows;
+
+```powershell
 .\.env\Scripts\activate
 ```
 
-or on linux
+Or on linux;
 
 ```bash
 . .env/bin/activate
@@ -119,15 +125,10 @@ Next we need a build tool called maturin (see documentation [PyO3/maturin](https
 pip install maturin
 ```
 
-To make this jupyter notebook work we need:
+To make jupyter notebooks work, and to run tests also do:
 
 ```console
 pip install ipykernel
-```
-
-And to run the tests in this package we need:
-
-```console
 pip install pytest
 ```
 
@@ -152,7 +153,7 @@ maturin develop --release
 or build wheel using
 
 ```console
-maturin build --interpreter python
+maturin build --release --interpreter python
 ```
 
 > NOTE: I had to add the `--interpreter python` flag since apparently `maturin` looks for the `py` launcher on the `PATH` and in my case there is no such launcher installed.
@@ -167,8 +168,8 @@ maturin build --interpreter python
   - It is slow and uses loads of ram.
   - It depends on `geopandas` `SpatialIndex.nearest()` which in turn depends on `pygeos` or `rtree`.
     - `geopandas` itself seems to hog tonnes of ram somehow
-    - I think i tested and found `rtree` only handles point objects, not lines?? I dont know why it wasn't working
-    - pygeos depends on the legendary `GEOS` C++ package. Pretty sure this handled linestrings and did the job nice and fast. But `pygeos` is an optional dependancy and you have to set flags in `geopandas` to enable it as the default backend. Don't like.
+    - I think i tested and found `rtree` only handles point objects, not lines?? I don't know why it wasn't working
+    - pygeos depends on the legendary `GEOS` C++ package. Pretty sure this handled linestrings and did the job nice and fast. But `pygeos` is an optional dependency and you have to set flags in `geopandas` to enable it as the default backend. Don't like.
 
 ### 6.2. nicklinref_rust
 
