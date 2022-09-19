@@ -25,7 +25,7 @@ jobs:
         uses: messense/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -m python/Cargo.toml
+          args: --release --out dist -m Cargo.toml
       - name: Install built wheel
         run: |
           pip install crfs --no-index --find-links dist --force-reinstall
@@ -52,7 +52,7 @@ jobs:
       with:
         target: ${{ matrix.target }}
         manylinux: auto
-        args: --release --out dist -m python/Cargo.toml
+        args: --release --out dist -m Cargo.toml
     - name: Install built wheel
       if: matrix.target == 'x86_64'
       run: |
@@ -79,7 +79,7 @@ jobs:
       with:
         target: ${{ matrix.target }}
         manylinux: auto
-        args: --release --out dist -m python/Cargo.toml
+        args: --release --out dist -m Cargo.toml
     - uses: uraimo/run-on-arch-action@v2.0.5
       if: matrix.target != 'ppc64'
       name: Install built wheel
