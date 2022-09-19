@@ -29,7 +29,7 @@ jobs:
           args: --release --out ../dist -m Cargo.toml --interpreter ${{ steps.installpython39.outputs.python-path }}
       - name: Install built wheel
         run: |
-          pip install megalinref --no-index --find-links dist --force-reinstall
+          pip install megalinref --no-index --find-links ../dist --force-reinstall
           python -c "import megalinref"
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -59,7 +59,7 @@ jobs:
     - name: Install built wheel
       if: matrix.target == 'x86_64'
       run: |
-        pip install megalinref --no-index --find-links dist --force-reinstall
+        pip install megalinref --no-index --find-links ../dist --force-reinstall
         python -c "import megalinref"
     - name: Upload wheels
       uses: actions/upload-artifact@v3
