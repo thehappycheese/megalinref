@@ -13,7 +13,12 @@ python-source = "python"
 [dependencies]
 geo-types  = {version = "0.7" }
 geo        = {version = "0.18",  features = ["use-serde"]}
-pyo3       = {version = "0.15",  features = ["abi3-py39", "extension-module", "nightly"]}
+pyo3       = {version = "0.15",  features = [
+    "abi3-py39",
+    #"py39",
+    "extension-module",
+    "nightly"
+]}
 #hashbrown   = {version = "0.11.2"}
 serde     = {version = "1.0" }
 bincode   = {version = "1.3" }
