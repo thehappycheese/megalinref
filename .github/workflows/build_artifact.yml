@@ -8,10 +8,11 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        target: [x64]
+        target: [x64, x86]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
+        id: installpython39
         with:
           python-version: 3.9
           architecture: ${{ matrix.target }}
@@ -25,7 +26,7 @@ jobs:
         uses: messense/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -m Cargo.toml
+          args: --release --out dist -m Cargo.toml --interpreter ${{ steps.installpython39.outputs.python-path }}
       - name: Install built wheel
         run: |
           pip install megalinref --no-index --find-links dist --force-reinstall
@@ -53,7 +54,7 @@ jobs:
       with:
         target: ${{ matrix.target }}
         manylinux: auto
-        args: --release --out dist -m Cargo.toml
+        args: --release --out dist -m Cargo.toml --interpreter ${{ steps.installpython39.outputs.python-path }}
     - name: Install built wheel
       if: matrix.target == 'x86_64'
       run: |
