@@ -26,7 +26,7 @@ jobs:
         uses: messense/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -m Cargo.toml --interpreter ${{ steps.installpython39.outputs.python-path }}
+          args: --release --out ../dist -m Cargo.toml --interpreter ${{ steps.installpython39.outputs.python-path }}
       - name: Install built wheel
         run: |
           pip install megalinref --no-index --find-links dist --force-reinstall
@@ -35,7 +35,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: wheels
-          path: dist
+          path: ../dist
 
   linux:
     runs-on: ubuntu-latest
@@ -46,6 +46,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
+      id: installpython39lin
       with:
         python-version: 3.9
         architecture: x64
@@ -54,7 +55,7 @@ jobs:
       with:
         target: ${{ matrix.target }}
         manylinux: auto
-        args: --release --out dist -m Cargo.toml --interpreter ${{ steps.installpython39.outputs.python-path }}
+        args: --release --out ../dist -m Cargo.toml --interpreter ${{ steps.installpython39lin.outputs.python-path }}
     - name: Install built wheel
       if: matrix.target == 'x86_64'
       run: |
@@ -64,7 +65,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: wheels
-        path: dist
+        path: ../dist
 
   # linux-cross:
   #   runs-on: ubuntu-latest
