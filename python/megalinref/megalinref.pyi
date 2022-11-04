@@ -1,20 +1,37 @@
 
 
-from typing import Any
+from typing import Any, List, Dict, Tuple, TypedDict, Literal
 
 
-Cwy:dict[str, int]
+Cwy:Dict[str, int]
 
 
-NetworkType:dict[str, int]
+NetworkType:Dict[str, int]
 
+FeatureCwy = Literal['Left', 'Single', 'Right']
+FeatureNetworkType = Literal['Local Road', 'Crossover', 'Proposed Road', 'Miscellaneous Road', 'Main Roads Controlled Path', 'State Road']
+
+class FeatureRowAttributes(TypedDict):
+    ROAD: str
+    CWY: FeatureCwy
+    NETWORK_TYPE: FeatureNetworkType
+    START_SLK: float
+    END_SLK: float
+    START_TRUE_DIST: float
+    END_TRUE_DIST: float
+
+class Result_road_slk_from_coordinate(TypedDict):
+    feature:FeatureRowAttributes
+    slk: float
+    true: float
+    distance_metres:float
 
 
 class Lookup:
     """Do we get to add docstrings like this?"""
     
     @staticmethod
-    def from_dict(road_network_data:dict[str, Any]) -> Lookup:
+    def from_dict(road_network_data:Dict[str, Any]) -> Lookup:
         """
         Lookup is a class that can be used to lookup Road Number and SLK from lat/lon or vice versa.
 
@@ -94,8 +111,9 @@ class Lookup:
         lat:float,
         lon:float,
         carriageways:int,
-        network_types:int
-    ) -> dict[Any, Any]:
+        network_types:int,
+        roads:List[str]
+    ) -> Result_road_slk_from_coordinate:
         """
         Returns the Road Number and SLK for for the road closest to the given lat/lon coordinate..
         
@@ -105,19 +123,17 @@ class Lookup:
         For example, to find only Left and Single carriageway roads, use `cwy=megalinref.Cwy["Left"] | megalinref.Cwy["Single"]`.
 
         Args:
-            lat: The latitude of the coordinate.
-            lon: The longitude of the coordinate.
-            cwy: The carriageway to search for. See `megalinref.Cwy`.
-            network_type: The network type to search for. See `megalinref.NetworkType`.
+            lat:          The latitude of the coordinate.
+            lon:          The longitude of the coordinate.
+            cwy:          The carriageway to search for. See docs for `megalinref.Cwy`.
+            network_type: The network type to search for. See docs for `megalinref.NetworkType`.
+            roads:        A list of road numbers eg ['H001', 'H002']. Use a blank list if no filtering is desired. Long lists will be bad for performance. Try use only one or two road numbers if possible.
 
         Returns:
             A dict containing the Road deatails, the slk, true, and the distance from the road to the input lat/lon coordinate.
-        
-        Example:
-        ```python
-        import megalinref as mlr
 
-        # load data as described in megalinref.download_fresh_data_as_json()
+        # result
+        ```text
             {
                 "feature":{
                     "ROAD":         "H016",
@@ -132,16 +148,17 @@ class Lookup:
                 "true":10,
                 "distance_metres":0,
             }
-
+        ```
         """
         ...
+
 
     def coordinate_from_road_slk(
         self,
         road:str,
         slk:float,
         carriagways:int
-    ) -> list[list[tuple[float, float]]]:
+    ) -> List[List[Tuple[float, float]]]:
         """
         Returns the lat/lon coordinates for the given Road Number and SLK.
 
@@ -153,3 +170,4 @@ class Lookup:
         Returns:
             A list for each carriageway containing a list of lat/lon coordinates.
         """
+        ...
