@@ -92,8 +92,10 @@ impl Lookup {
 
     #[staticmethod]
     pub fn from_binary(input: &PyBytes) -> PyResult<Self> {
-        let lookup:Self = bincode::deserialize(input.as_bytes()).unwrap();
-        Ok(lookup)
+        match bincode::deserialize::<Self>(input.as_bytes()) {
+            Ok(x)=>Ok(x),
+            Err(e)=>Err(pyo3::exceptions::PyValueError::new_err("Unable to deserializse the provided bytes")),
+        }
     }
 
 
@@ -102,13 +104,14 @@ impl Lookup {
             Ok(encoded) => encoded,
             Err(x) => return Err(pyo3::exceptions::PyException::new_err(x.to_string())),
         };
-        
         let result = PyBytes::new_with(py, encoded.len(), |buffer| {
             buffer.copy_from_slice(&encoded);
             Ok(())
         });
-        let result = result.unwrap();
-        Ok(result.to_object(py))
+        match result{
+            Ok(x)=>Ok(x.to_object(py)),
+            Err(e)=>Err(e)
+        }
     }
 
     /// Exists for basic testing... may remove in the future
@@ -122,38 +125,24 @@ impl Lookup {
         lon: f64,
         carriageways: u8,
         network_types: u8,
-        roads:Option<Vec<String>>,
+        roads:Vec<String>,
         py: Python,
     ) -> PyResult<PyObject> {
 
         let pnt = point!(x: lon, y: lat);
 
-        let zeroth = self
+        let dont_filter_by_roads = roads.len() == 0;
+
+        let lookup_result = self
             .features
             .par_iter()
-            .enumerate();
-            
-        let first = match roads {
-            None=> zeroth.filter(|(_index, ExtractedFeature { properties, .. })| {
-                   ((properties.cwy as u8)          & carriageways ) != 0
-                && ((properties.network_type as u8) & network_types) != 0
-            }),
-            Some(road_list)=>match road_list[..]{
-                []=>zeroth.filter(|(_index, ExtractedFeature { properties, .. })| {
-                       ((properties.cwy as u8)          & carriageways ) != 0
-                    && ((properties.network_type as u8) & network_types) != 0
-                }),
-                _=>zeroth.filter(|(_index, ExtractedFeature { properties, .. })| {
-                       ((properties.cwy as u8)          & carriageways ) != 0
-                    && ((properties.network_type as u8) & network_types) != 0
-                    && road_list.iter().any(|item|item==properties.road)
-                })
-            }
-        };
-
-
-        let lookup_result = first
-            .map(|(index, feature)| Some((index, feature.geometry.0.euclidean_distance(&pnt))))
+            .enumerate()
+            .filter(|(_index, ExtractedFeature { properties, .. })| {
+                   properties.cwy.matches_filter(carriageways)
+                && properties.network_type.matches_filter(network_types)
+                && (dont_filter_by_roads || roads.iter().any(|item| *item == properties.road))
+            })
+            .map(|(index, feature)| Some((index, feature.geometry.0.euclidean_distance(&pnt)))) // TODO: should be haversine distance
             .reduce(
                 || None,
                 |a, b| match (a, b) {
@@ -174,7 +163,7 @@ impl Lookup {
             None => return Err(pyo3::exceptions::PyException::new_err(concat!(
                 "Failed to find any roads in dataset. ",
                 "Thats weird because this function should find the nearest road even if the dataset contains one road. ",
-                "This is likely because this Lookup object was constructed with an 'empty' dataset. ", 
+                "This is likely because this Lookup object was constructed with an 'empty' dataset (or there is some other mysterious error)", 
                 "Check the dictionary passed to .from_dict()"
             ))),
         };
@@ -182,7 +171,10 @@ impl Lookup {
 
         let feature = &self.features[index];
 
-        let distance_along_object = feature.geometry.0.line_locate_point(&pnt).unwrap();
+        let distance_along_object = match feature.geometry.0.line_locate_point(&pnt) {
+            Some(x)=>x,
+            None=>return Err(pyo3::exceptions::PyException::new_err("Unable to locatte point along linestring"))
+        };
 
         let feature_dict = PyDict::new(py);
         feature_dict.set_item("feature", feature.properties.to_object(py))?;
@@ -216,32 +208,33 @@ impl Lookup {
         // offset: f64,
         py: Python,
     ) -> PyResult<PyObject> {
-        let list_of_lists:Vec<PyObject> = self
-            .index
-            .get(road)
-            .unwrap()
-            .iter_matching_carriageways(carriageways)
-            .filter_map(|(_cwy, index_range)| {
-                let list_of_points:Vec<PyObject> = self
-                .features[index_range]
-                .into_iter()
-                .filter_map(|feature|{
-                    if feature.properties.slk_from <= slk && slk <= feature.properties.slk_to {
-                        let fraction = (slk - feature.properties.slk_from) / (feature.properties.slk_to - feature.properties.slk_from);
-                        match feature.geometry.0.line_interpolate_point(fraction){
-                            Some(coordinate) => Some(PyTuple::new(py, &[coordinate.x().to_object(py), coordinate.y().to_object(py)]).to_object(py)),
-                            None=>None
-                        }
-                    }else{
-                        None
-                    }
-                })
-                .collect();
-                Some(PyList::new(py, list_of_points).to_object(py))
-            }).collect();
+        let list_of_lists = match self.index.get(road){
+            None=>Vec::new(),
+            Some(road)=> 
+                road
+                .iter_matching_carriageways(carriageways)
+                .filter_map(|(_cwy, index_range)| {
+                    let list_of_points:Vec<PyObject> = self
+                        .features[index_range]
+                        .into_iter()
+                        .filter_map(|feature|{
+                            if feature.properties.slk_from <= slk && slk <= feature.properties.slk_to {
+                                let fraction = (slk - feature.properties.slk_from) / (feature.properties.slk_to - feature.properties.slk_from);
+                                match feature.geometry.0.line_interpolate_point(fraction){
+                                    Some(coordinate) => Some(PyTuple::new(py, &[coordinate.x().to_object(py), coordinate.y().to_object(py)]).to_object(py)),
+                                    None=>None
+                                }
+                            }else{
+                                None
+                            }
+                        })
+                        .collect();
+                    Some(PyList::new(py, list_of_points).to_object(py))
+                }).collect()
+        };
         Ok(PyList::new(py, list_of_lists).into())
-        
     }
+
     pub fn linestring_from_road_slk(
         &self,
         road: &str,
@@ -250,13 +243,34 @@ impl Lookup {
         carriageways: u8,
         offset: f64,
         py: Python,
-    ){
-        todo!("Not yet implemented")
+    ) -> PyResult<PyObject> {
+        todo!("Not Implemented")
+        // let rr = self
+        // .index
+        // .get(road)
+        // .unwrap_or(Vec::new())
+        // .iter_matching_carriageways(carriageways)
+        // .filter_map(|(_cwy, index_range)| {
+        //     let list_of_points:Vec<PyObject> = self
+        //     .features[index_range]
+        //     .into_iter()
+        //     .filter_map(|feature|{
+        //         if feature.properties.slk_from <= slk && slk <= feature.properties.slk_to {
+        //             todo!("Not yet implemented");
+        //         }else{
+        //             None
+        //         }
+        //     })
+        //     .collect();
+        //     Some(PyList::new(py, list_of_points).to_object(py))
+        // }).collect();
+        // rr
     }
-
 }
 
 
+// This impl block implements
+// Rust native methods which will not be exposed to python
 impl Lookup{
 
     fn build_index(features: & Vec<ExtractedFeature>) -> HashMap<String, RoadSectionsByCarriageway> {
