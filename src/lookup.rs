@@ -122,22 +122,37 @@ impl Lookup {
         lon: f64,
         carriageways: u8,
         network_types: u8,
-        // roads:Option<Vec<String>> TODO: add filter for roads
+        roads:Option<Vec<String>>,
         py: Python,
     ) -> PyResult<PyObject> {
 
         let pnt = point!(x: lon, y: lat);
 
-
-
-        let lookup_result = self
+        let zeroth = self
             .features
             .par_iter()
-            .enumerate()
-            .filter(|(_index, ExtractedFeature { properties, .. })| {
+            .enumerate();
+            
+        let first = match roads {
+            None=> zeroth.filter(|(_index, ExtractedFeature { properties, .. })| {
                    ((properties.cwy as u8)          & carriageways ) != 0
                 && ((properties.network_type as u8) & network_types) != 0
-            })
+            }),
+            Some(road_list)=>match road_list[..]{
+                []=>zeroth.filter(|(_index, ExtractedFeature { properties, .. })| {
+                       ((properties.cwy as u8)          & carriageways ) != 0
+                    && ((properties.network_type as u8) & network_types) != 0
+                }),
+                _=>zeroth.filter(|(_index, ExtractedFeature { properties, .. })| {
+                       ((properties.cwy as u8)          & carriageways ) != 0
+                    && ((properties.network_type as u8) & network_types) != 0
+                    && road_list.iter().any(|item|item==properties.road)
+                })
+            }
+        };
+
+
+        let lookup_result = first
             .map(|(index, feature)| Some((index, feature.geometry.0.euclidean_distance(&pnt))))
             .reduce(
                 || None,

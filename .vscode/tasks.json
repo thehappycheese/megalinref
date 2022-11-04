@@ -1,0 +1,84 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    
+    "tasks": [
+        {
+            "label": "maturin develop",
+            "type": "shell",
+            "command": "maturin develop --release",
+        },
+        {
+            "label": "conda deactivate",
+            "type": "shell",
+            "command": "conda deactivate"
+        },
+        {
+            "label": "venv activate",
+            "type": "shell",
+            "command": ".\\.env\\Scripts\\activate"
+        },
+        {
+            "label": "pytest",
+            "command": "${command:testing.runAll}"
+        },
+        {
+            "label": "clear python output",
+            "command": "${command:workbench.output.action.clearOutput}"
+        },
+        {
+            "label": "pytest show output",
+            "command": "${command:python.viewOutput}"
+        },
+        {
+            "label": "Test",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "conda deactivate",
+                "venv activate",
+                "clear python output",
+                "pytest",
+                "pytest show output"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Develop",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "conda deactivate",
+                "venv activate",
+                "maturin develop",
+                "clear python output",
+                "pytest",
+                "pytest show output"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": true
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
