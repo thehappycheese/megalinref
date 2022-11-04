@@ -14,7 +14,8 @@ Uses Rust binaries in the backend for the mega-speed you deserve :)
 - [4. Why write a Python Library in Rust?](#4-why-write-a-python-library-in-rust)
 - [5. Setup for Development](#5-setup-for-development)
   - [5.1. Initial Setup](#51-initial-setup)
-  - [5.2. Build using `maturin`](#52-build-using-maturin)
+  - [5.2. Install Rust Toolchain](#52-install-rust-toolchain)
+  - [5.3. Build using `maturin`](#53-build-using-maturin)
 - [6. Previous Projects](#6-previous-projects)
   - [6.1. linrefreverse](#61-linrefreverse)
   - [6.2. nicklinref_rust](#62-nicklinref_rust)
@@ -175,9 +176,14 @@ pip install ipykernel
 pip install pytest
 ```
 
-### 5.2. Build using `maturin`
+### 5.2. Install Rust Toolchain
 
-To build on Amazon Linux Container:
+
+Follow the guidance to [install Rust](https://www.rust-lang.org/tools/install) on the Rust website
+
+> NOTE: Nightly rust is currently required
+
+> NOTE: To build on Amazon Linux there are some extra steps to install some development dependancies which are missing by default:
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -185,7 +191,8 @@ sudo yum update
 sudo yum groupinstall "Development Tools"
 ```
 
-For windows follow the guidance to install Rust on the Rust website.
+
+### 5.3. Build using `maturin`
 
 build for testing using
 
