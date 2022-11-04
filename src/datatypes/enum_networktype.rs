@@ -23,24 +23,44 @@ pub enum NetworkType {
     Crossover                  = 0b0010_0000,
 }
 
+impl NetworkType {
+    pub fn matches_filter(&self, filter:u8) -> bool {
+        return ((*self as u8) & filter) != 0
+    }
+}
+
 
 impl<'a> FromPyObject<'a> for NetworkType{
     fn extract(input: &'a PyAny) -> PyResult<Self> {
-        let result = match input.extract::<&str>(){   
-            Ok("State Road")                 => NetworkType::State_Road,
-            Ok("Local Road")                 => NetworkType::Local_Road,
-            Ok("Miscellaneous Road")         => NetworkType::Miscellaneous_Road,
-            Ok("Main Roads Controlled Path") => NetworkType::Main_Roads_Controlled_Path,
-            Ok("Proposed Road")              => NetworkType::Proposed_Road,
-            Ok("Crossover")                  => NetworkType::Crossover,
-            Ok(x)                       => return Err(pyo3::exceptions::PyException::new_err(
-                format!("Invalid value for NETWORK_TYPE '{}'", x)
+        match input.extract::<&str>(){
+            Ok(thestr)=>match thestr.try_into() {   
+                Ok(variant) => Ok(variant),
+                Err(msg)=> Err(pyo3::exceptions::PyException::new_err(
+                    format!("Unable to extract NETWORK_TYPE as string: {msg}")
+                ))
+            },
+            Err(_) => Err(pyo3::exceptions::PyException::new_err(
+                "Unable to extract NETWORK_TYPE as string",
             )),
-            Err(_)                           => return Err(pyo3::exceptions::PyException::new_err(
-                "Unable to extract NETWORK_TYPE as string"
-            ))
-        };
-        Ok(result)
+        }
+    }
+}
+
+impl TryFrom<&str> for NetworkType {
+    type Error = String;
+    fn try_from(input_string:&str)->Result<Self, Self::Error>{
+        match input_string.to_lowercase().as_ref() {
+            "state road"                 => Ok(NetworkType::State_Road),
+            "local road"                 => Ok(NetworkType::Local_Road),
+            "miscellaneous road"         => Ok(NetworkType::Miscellaneous_Road),
+            "main roads controlled path" => Ok(NetworkType::Main_Roads_Controlled_Path),
+            "proposed road"              => Ok(NetworkType::Proposed_Road),
+            "crossover"                  => Ok(NetworkType::Crossover),
+            other=>{
+                let error_text_to_display:String = other.chars().into_iter().take(50).collect();
+                Err(format!("Could not parse NetworkType. Expected state road, local road, miscellaneous road, main roads controlled path, proposed road, crossover (Not case Sensitive)  but found '{error_text_to_display}'"))
+            }
+        }
     }
 }
 

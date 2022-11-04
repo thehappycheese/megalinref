@@ -40,21 +40,29 @@ pub enum Cwy {
     Right  = CWY_RIGHT  as isize,
 }
 
+impl Cwy{
+    pub fn matches_filter(&self, filter:u8) -> bool{
+        return ((*self as u8) & filter) != 0
+    }
+}
+
 
 impl TryFrom<&str> for Cwy{
     type Error = PyErr;
     fn try_from(s: &str) -> PyResult<Self> {
-        match s {
-            "Left"   => Ok(Cwy::Left),
-            "Single" => Ok(Cwy::Single),
-            "Right"  => Ok(Cwy::Right),
-            "L"      => Ok(Cwy::Left),
-            "S"      => Ok(Cwy::Single),
-            "R"      => Ok(Cwy::Right),
-            _        => Err(exceptions::PyValueError::new_err::<String>("Invalid value for CWY".into()))
+        match s.to_lowercase().as_ref() {
+            "left"   => Ok(Cwy::Left),
+            "single" => Ok(Cwy::Single),
+            "right"  => Ok(Cwy::Right),
+            "l"      => Ok(Cwy::Left),
+            "s"      => Ok(Cwy::Single),
+            "r"      => Ok(Cwy::Right),
+            other    => Err(exceptions::PyValueError::new_err::<String>(format!("Invalid value for CWY: Expected left, single, right, l, r, s but found '{other}' (Not case sensitive)")))
         }
     }
 }
+
+
 
 
 impl<'a> FromPyObject<'a> for Cwy{
@@ -67,6 +75,7 @@ impl<'a> FromPyObject<'a> for Cwy{
 }
 
 
+// Not sure why I disabled this; I think it is wrong; it should be for Vec<Cwy> since a single int can encode more than one cwy
 // impl TryFrom<u8> for Cwy{
 //     type Error = PyErr;
 //     fn try_from(i: u8) -> PyResult<Self> {
@@ -83,9 +92,9 @@ impl<'a> FromPyObject<'a> for Cwy{
 impl ToPyObject for Cwy{
     fn to_object(&self, py: Python) -> PyObject {
         match self{
-            Cwy::Left => "Left".to_object(py),
+            Cwy::Left   => "Left".to_object(py),
             Cwy::Single => "Single".to_object(py),
-            Cwy::Right => "Right".to_object(py),
+            Cwy::Right  => "Right".to_object(py),
         }
     }
 }
