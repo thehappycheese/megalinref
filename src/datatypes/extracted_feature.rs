@@ -45,7 +45,7 @@ impl<'a> FromPyObject<'a> for ExtractedFeature{
             )),
         };
             
-        //}.unwrap().extract::<ExtractedLineString>()?;
+        
         Ok(Self{
             properties,
             geometry
