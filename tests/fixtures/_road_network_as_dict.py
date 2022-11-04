@@ -1,5 +1,8 @@
+from typing import Dict, Any
+import pytest
 
-def get_test_road_network_as_dict():
+@pytest.fixture()
+def road_network() -> Dict[str, Any]:
     import json
     import os
     try:

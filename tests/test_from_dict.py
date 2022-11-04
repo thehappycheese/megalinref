@@ -1,4 +1,5 @@
 import pytest
+from fixtures import road_network
 
 
 def test_from_dict_no_arguments():
@@ -172,7 +173,8 @@ def test_from_dict_ok_one_feature():
         lon           = 116.01613363394955, 
         lat           = -31.90864177309936,
         carriageways  = mlr.Cwy["All"],
-        network_types = mlr.NetworkType["All"]
+        network_types = mlr.NetworkType["All"],
+        roads         = [],
     )
 
     assert result["feature"]["ROAD"] == "X001"
@@ -195,16 +197,15 @@ def test_from_dict_ok_all_features():
         lon           = 116.01613363394955,
         lat           = -31.90864177309936,
         carriageways  = mlr.Cwy["All"],
-        network_types = mlr.NetworkType["All"]
+        network_types = mlr.NetworkType["All"],
+        roads=[]
     )
     
     assert result["feature"]["ROAD"] == "X001"
     assert result["slk"] == 0.03
 
-def test_from_dict_ok_all_features_multi_test():
+def test_from_dict_ok_all_features_multi_test(road_network):
     from util.confirm_test_cases_with_instance import confirm_test_cases_with_instance
-    from util.get_test_road_network_as_dict import get_test_road_network_as_dict
     from megalinref import Lookup
-    road_network = get_test_road_network_as_dict()
     slk_lookup = Lookup.from_dict(road_network)
     confirm_test_cases_with_instance(slk_lookup)

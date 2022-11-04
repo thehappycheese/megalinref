@@ -1,17 +1,10 @@
+from fixtures import road_network
 
 
-
-
-
-
-def test_coord_from_road_slk():
+def test_coord_from_road_slk(road_network):
     from megalinref import Lookup, Cwy
-    from util.get_test_road_network_as_dict import get_test_road_network_as_dict
     import numpy as np
-
-    road_network = get_test_road_network_as_dict()
     lookup = Lookup.from_dict(road_network)
-
     examples = [
         [
             {"road":"H016", "slk":8.5, "carriageways":Cwy["Left"]},
