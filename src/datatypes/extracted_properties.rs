@@ -79,7 +79,6 @@ impl<'a> FromPyObject<'a> for ExtractedProperties{
         };
 
         macro_rules! try_extract_from_dict {
-
             ($key:expr, $typ:ty) => {
                 match dict.get_item($key){
                     Some(pyany) => match pyany.extract::<$typ>() {
@@ -93,16 +92,7 @@ impl<'a> FromPyObject<'a> for ExtractedProperties{
                     )),
                 }
             }
-
         }
-
-        // let road:String              = try_extract_from_dict!("ROAD",            String      );
-        // let cwy:Cwy                  = try_extract_from_dict!("CWY",             Cwy         );
-        // let network_type:NetworkType = try_extract_from_dict!("NETWORK_TYPE",    NetworkType );
-        // let slk_from:f64             = try_extract_from_dict!("START_SLK",       f64         );
-        // let slk_to:f64               = try_extract_from_dict!("END_SLK",         f64         );
-        // let true_from:f64            = try_extract_from_dict!("START_TRUE_DIST", f64         );
-        // let true_to:f64              = try_extract_from_dict!("END_TRUE_DIST",   f64         );
         
         Ok(Self{
             road         : try_extract_from_dict!("ROAD",            String      ),
