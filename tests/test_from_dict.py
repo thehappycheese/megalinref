@@ -52,9 +52,6 @@ def test_from_dict_features_bad_properties():
         ]})
 
 
-
-
-
 def test_from_dict_properties_missing():
     import megalinref as mlr
 

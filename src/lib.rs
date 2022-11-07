@@ -1,7 +1,3 @@
-//#![feature(specialization)]
-
-extern crate pyo3;
-
 use pyo3::{prelude::*, types::PyList, types::PyDict};
 
 mod lookup;
@@ -14,11 +10,9 @@ use datatypes::{
 };
 use lookup::Lookup;
 
-
 /// My Module test documentation
 #[pymodule]
 fn megalinref(py: Python, module: &PyModule) -> PyResult<()> {
-
     // Cwy enum represented as dict
     module.add("Cwy", PyDict::from_sequence(
             py, 
