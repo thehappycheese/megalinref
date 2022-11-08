@@ -44,6 +44,31 @@ impl Cwy{
     pub fn matches_filter(&self, filter:u8) -> bool{
         return ((*self as u8) & filter) != 0
     }
+
+    /// Convert a u8 representation of a Carriageway filter
+    /// into a string which can be used for error messages
+    pub fn filter_to_string(filter:u8) -> String {
+        #[allow(non_snake_case)]
+        let L = match Cwy::Left.matches_filter(filter) {
+            true  => "L",
+            false => ""
+        };
+        #[allow(non_snake_case)]
+        let R = match Cwy::Right.matches_filter(filter) {
+            true  => "R",
+            false => ""
+        };
+        #[allow(non_snake_case)]
+        let S = match Cwy::Single.matches_filter(filter) {
+            true  => "S",
+            false => ""
+        };
+        let result = format!("{L}{R}{S}");
+        match &result[..] {
+            "" => "NoCway".into(),
+            _  => result
+        }
+    }
 }
 
 

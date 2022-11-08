@@ -171,3 +171,16 @@ class Lookup:
             A list for each carriageway containing a list of lat/lon coordinates.
         """
         ...
+    
+    def linestring_from_road_slk(
+        self,
+        road         : str,
+        slk_from     : float,
+        slk_to       : float,
+        carriageways : int,
+        offset       : float,
+    )->List[List[Tuple[float, float]]]:
+        """ Returns a list of linestrings truncated to slk_from and slk_to
+        """
+        ...
+        

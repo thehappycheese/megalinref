@@ -34,7 +34,7 @@ use crate::datatypes::{
     RoadSectionsByCarriageway,
 };
 use crate::util::convert_degrees_to_metres;
-
+use crate::datatypes::Cwy;
 
 
 
@@ -244,27 +244,42 @@ impl Lookup {
         offset: f64,
         py: Python,
     ) -> PyResult<PyObject> {
-        todo!("Not Implemented")
-        // let rr = self
-        // .index
-        // .get(road)
-        // .unwrap_or(Vec::new())
-        // .iter_matching_carriageways(carriageways)
-        // .filter_map(|(_cwy, index_range)| {
-        //     let list_of_points:Vec<PyObject> = self
-        //     .features[index_range]
-        //     .into_iter()
-        //     .filter_map(|feature|{
-        //         if feature.properties.slk_from <= slk && slk <= feature.properties.slk_to {
-        //             todo!("Not yet implemented");
-        //         }else{
-        //             None
-        //         }
-        //     })
-        //     .collect();
-        //     Some(PyList::new(py, list_of_points).to_object(py))
-        // }).collect();
-        // rr
+        if let Some(carriageway_data) = self.index.get(road){
+            let carriageway_linestrings:Vec<PyObject> = 
+                carriageway_data
+                .iter_matching_carriageways(carriageways)
+                .filter_map(|(_cwy, index_range)| {
+                    let linestrings:Vec<&PyList> =
+                        self
+                        .features[index_range]
+                        .into_iter()
+                        .filter_map(|feature|{
+                            let max_slk_from   = slk_from.max(feature.properties.slk_from);
+                            let min_slk_to     = slk_to  .min(feature.properties.slk_to  );
+                            let signed_overlap = min_slk_to - max_slk_from;
+                            if signed_overlap > 0f64 {
+                                Some(PyList::new(
+                                    py,
+                                    feature
+                                    .geometry
+                                    .0
+                                    .coords()
+                                    .map(|coord| PyTuple::new(py, [coord.x, coord.y]))
+                                    .collect::<Vec<&PyTuple>>()
+                                ))
+                            }else{
+                                None
+                            }
+                        })
+                        .collect();
+                    Some(PyList::new(py, linestrings).to_object(py))
+                })
+                .collect();
+            Ok(PyList::new(py,carriageway_linestrings).to_object(py))
+        }else{
+            let cway_filter = Cwy::filter_to_string(carriageways);
+            Err(pyo3::exceptions::PyValueError::new_err(format!("Unable to find result for road {road}-{cway_filter} slk {slk_from}-{slk_to}")))
+        }
     }
 }
 
