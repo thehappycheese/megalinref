@@ -28,7 +28,21 @@ class Result_road_slk_from_coordinate(TypedDict):
 
 
 class Lookup:
-    """Do we get to add docstrings like this?"""
+    """
+    Lookup is a class that can be used to lookup Road Number and SLK from
+    lat/lon or vice versa.
+
+    See docs for `Lookup.road_slk_from_coordinate` and
+    `Lookup.coordinate_road_slk` for examples.
+
+    A lookup object must be constructed by reading the road network data, either
+    from a python dictionary using Lookup.from_dict() or from a bytes object
+    using Lookup.from_binary()
+
+    See `megalinref.open_from_cache_or_download(...)` or 
+    `megalinref.open_binary_file(...)` for more convenient ways to construct
+    a Lookup instance.
+    """
     
     @staticmethod
     def from_dict(road_network_data:Dict[str, Any]) -> Lookup:
@@ -122,6 +136,8 @@ class Lookup:
         The `cwy` parameter is a bitflag, and can accept binary combinations of the megalinref.Cwy dictionary.
         For example, to find only Left and Single carriageway roads, use `cwy=megalinref.Cwy["Left"] | megalinref.Cwy["Single"]`.
 
+        
+
         Args:
             lat:          The latitude of the coordinate.
             lon:          The longitude of the coordinate.
@@ -132,22 +148,37 @@ class Lookup:
         Returns:
             A dict containing the Road deatails, the slk, true, and the distance from the road to the input lat/lon coordinate.
 
-        # result
+        Example:
+
+        ```python
+        from megalinref import open_from_cache_or_download, Lookup, Cwy, NetworkType
+        lookup = open_from_cache_or_download("road_network.bin")
+        result = lookup.road_slk_from_coordinate(
+            lat           = -31.89006203575722,
+            lon           = 115.80183730752809,
+            carriageways  = Cwy["L"] | Cwy["R"],
+            network_types = NetworkType["State Road"] | NetworkType["Local Road"],
+            roads         = []
+        )
+        print(result)
+        ```
+
         ```text
-            {
-                "feature":{
-                    "ROAD":         "H016",
-                    "CWY":          "Left",
-                    "NETWORK_TYPE": "State Road",
-                    "START_SLK":    8,
-                    "END_SLK":      11,
-                    "START_TRUE":   8,
-                    "END_TRUE":     11
-                },
-                "slk": 10,
-                "true":10,
-                "distance_metres":0,
-            }
+
+        {
+            'feature': {
+                'ROAD': 'H016',
+                'CWY': 'Left',
+                'START_SLK': 9.84,
+                'END_SLK': 10.68,
+                'START_TRUE_DIST': 9.84,
+                'END_TRUE_DIST': 10.68,
+                'NETWORK_TYPE': 'State Road'
+            },
+            'slk': 10.000,
+            'true': 10.000,
+            'distance_metres': 0.000
+        }
         ```
         """
         ...
@@ -169,6 +200,12 @@ class Lookup:
         
         Returns:
             A list for each carriageway containing a list of lat/lon coordinates.
+
+        Example:
+
+        ```python
+
+        ```
         """
         ...
     
@@ -181,6 +218,30 @@ class Lookup:
         offset       : float,
     )->List[List[Tuple[float, float]]]:
         """ Returns a list of linestrings truncated to slk_from and slk_to
+
+        Example:
+
+        ```python
+        from megalinref import open_from_cache_or_download, Lookup, Cwy, NetworkType
+        lookup = open_from_cache_or_download("road_network.bin")
+        result = lookup.linestring_from_road_slk(
+            road         = "H013",
+            slk_from     = 15.06,
+            slk_to       = 15.20,
+            carriageways = mlr.Cwy["S"],
+            offset       = 0,
+        )
+        print(result)
+        ```
+
+        ```text
+        
+        [[[(115.76531688239908, -32.04096302748923),
+        (115.76413787234668, -32.04097693587323)],
+        [(115.76413787234668, -32.04097693587323),
+        (115.76327106891421, -32.04099304031786)]]]
+        ```
         """
+
         ...
         

@@ -11,6 +11,10 @@ Uses Rust binaries in the backend for the mega-speed you deserve :)
 - [1. Development Progress](#1-development-progress)
 - [2. Installation](#2-installation)
 - [3. Usage / Examples](#3-usage--examples)
+  - [3.1. Setup](#31-setup)
+  - [3.2. Use `road_slk_from_coordinate`](#32-use-road_slk_from_coordinate)
+  - [3.3. Use `coordinate_from_road_slk`](#33-use-coordinate_from_road_slk)
+  - [3.4. Use `linestring_from_road_slk`](#34-use-linestring_from_road_slk)
 - [4. Why write a Python Library in Rust?](#4-why-write-a-python-library-in-rust)
 - [5. Setup for Development](#5-setup-for-development)
   - [5.1. Initial Setup](#51-initial-setup)
@@ -63,32 +67,25 @@ for instructions on how to install each release.
 
 ## 3. Usage / Examples
 
-The following is subject to change in future releases:
+### 3.1. Setup
+
+The following steps are required to set-up a `Lookup` object which will be used
+in all subsequent examples
 
 ```python
 from megalinref import (
     Lookup,
     Cwy,
     NetworkType,
-    download_fresh_data_as_json
+    open_from_cache_or_download,
 )
 
-road_network = download_fresh_data_as_json()
-slk_lookup = Lookup.from_dict(road_network)
+slk_lookup = open_from_cache_or_download("road_network.bin")
+```
 
-# the download step above takes a while,
-# lets cache the lookup object so we don't
-# have to repeat the download next time:
-with open("cached_lookup.bin", "wb") as bin_cache:
-    bin_cache.write(slk_lookup.to_binary())
+### 3.2. Use `road_slk_from_coordinate`
 
-# For demonstration purposes lets reload 
-# a new copy of `lookup` from the cache
-with open("cached_lookup.bin", "rb") as bin_cache:
-    slk_lookup = Lookup.from_binary(
-        bin_cache.read()
-    )
-
+```python
 # lets lookup a road/slk based on a lat/lon
 result = slk_lookup.road_slk_from_coordinate(
     lat           = -31.89006203575722,
@@ -97,10 +94,11 @@ result = slk_lookup.road_slk_from_coordinate(
     network_types = NetworkType["State Road"] | NetworkType["Local Road"],
     roads         = []
 )
-result["slk"]             = round(result["slk"],             3)
-result["true"]            = round(result["true"],            3)
-result["distance_metres"] = round(result["distance_metres"], 3)
-assert result == {
+print(result)
+```
+
+```text
+{
     'feature': {
         'ROAD': 'H016',
         'CWY': 'Left',
@@ -114,18 +112,50 @@ assert result == {
     'true': 10.000,
     'distance_metres': 0.000
 }
+```
 
+### 3.3. Use `coordinate_from_road_slk`
+
+```python
 # now lets lookup a lat/lon based on a road/slk
 result = slk_lookup.coordinate_from_road_slk(
     road         = "H016",
     slk          = 8.5,
     carriageways = Cwy["L"]
 )
-assert result == [[(115.81402235326775, -31.897493888518945)]]
-# the result type will be improved in future; currently you get a list of up to
-# three lists (corresponding with Left, Single and Right Carriageway), each
-# containing one or more coordinates as tuples.
+print(result)
 ```
+
+```text
+assert result == [[(115.81402235326775, -31.897493888518945)]]
+```
+
+> the result type will be improved in future; currently you get a list of up to
+> three lists, each containing zero or more coordinates as tuples.
+
+### 3.4. Use `linestring_from_road_slk`
+
+```python
+result = slk_lookup.linestring_from_road_slk(
+    road         = "H013",
+    slk_from     = 15.06,
+    slk_to       = 15.20,
+    carriageways = mlr.Cwy["S"],
+    offset       = 0,
+)
+print(result)
+```
+
+```text
+
+[[[(115.76531688239908, -32.04096302748923),
+(115.76413787234668, -32.04097693587323)],
+[(115.76413787234668, -32.04097693587323),
+(115.76327106891421, -32.04099304031786)]]]
+```
+
+> the result type will be improved in future; currently you get line strings
+> with tuple coordinates nested and segmented awkwardly.
 
 ## 4. Why write a Python Library in Rust?
 

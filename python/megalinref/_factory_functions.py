@@ -9,14 +9,10 @@ def open_binary_file(file: Union[str, Path, BinaryIO, bytes, bytearray]) -> Look
     Opens a binary file and creates a Lookup object from its contents.
     
     Parameters:
-    file: Can be a file path (str), a file handle (file-like object) or a bytes object.
+    file: a path or file-like object
 
     Returns:
     Lookup: A Lookup object created from the binary content of the file.
-    
-    Raises:
-    TypeError: If the provided 'file' parameter is not a str, file-like object, or bytes.
-    FileNotFoundError: If the provided 'file' parameter is a str (file path) and the file does not exist.
     """
     if isinstance(file, (str, Path)):  # for file paths
         path_to_data = Path(file)
@@ -40,14 +36,20 @@ def open_from_cache_or_download(file_path: Union[Path, str]) -> Lookup:
     its contents. If the file does not exist, downloads fresh data, converts it
     to binary and caches it.
 
+    example:
+
+    ```
+    # the path to the cache file (name it whatever you want)
+    cache_path = "megalinref_cache.bin"
+
+    lookup = open_from_cache_or_download(cache_path)
+    ```
+
     Parameters:
-    file_path: A file path (str).
+    file_path: Path the cache file that will be read or created (str, Path).
 
     Returns:
     Lookup: A Lookup object created from the binary content of the file.
-
-    Raises:
-    TypeError: If the provided 'file_path' parameter is not a str.
     """
 
     path_to_data = Path(file_path)

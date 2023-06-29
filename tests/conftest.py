@@ -11,5 +11,5 @@ def road_network() -> Dict[str, Any]:
     except FileNotFoundError:
         cwd = os.getcwd()
         full_path = os.path.join(cwd, "temporary_test_data/road_network.json")
-        raise Exception(f"Tests failed to locate {full_path}.\n Please run though `tests\setup temporary_test_data.ipynb` to download test data.")
+        raise Exception(f"Tests failed to locate {full_path}.\n Please run though `tests\\setup temporary_test_data.ipynb` to download test data.")
     return json_data
