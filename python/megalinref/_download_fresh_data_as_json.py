@@ -29,6 +29,7 @@ def download_fresh_data_as_json(url:str=DATA_SOURCE_URL, chunk_limit:Optional[in
     output=[]
     offset = 0
     chunk_counter = 0
+    json = None
     while True:
         if chunk_limit is not None and chunk_counter >= chunk_limit:
             break
@@ -43,6 +44,10 @@ def download_fresh_data_as_json(url:str=DATA_SOURCE_URL, chunk_limit:Optional[in
         if "exceededTransferLimit" not in json or not json["exceededTransferLimit"]:
             break
         print(".", end="")
+        
+    if json is None or len(output) == 0:
+        raise Exception("No data was returned")
+    
     print(f"\nDownload Completed. received {len(output)} records")
     json["features"] = output
     json = arcgis2geojson(json)
