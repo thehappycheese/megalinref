@@ -18,7 +18,7 @@ Uses Rust binaries in the backend for the mega-speed you deserve :)
   - [5.3. Build using `maturin`](#53-build-using-maturin)
 - [6. Previous Projects](#6-previous-projects)
   - [6.1. linrefreverse](#61-linrefreverse)
-  - [6.2. nicklinref_rust](#62-nicklinref_rust)
+  - [6.2. nicklinref\_rust](#62-nicklinref_rust)
 
 ## 1. Development Progress
 
@@ -173,8 +173,7 @@ pip install maturin
 To make jupyter notebooks work, and to run tests also do:
 
 ```console
-pip install ipykernel
-pip install pytest
+pip install ipykernel pytest dictdiffer
 ```
 
 ### 5.2. Install Rust Toolchain

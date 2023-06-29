@@ -1,5 +1,5 @@
 import pytest
-from fixtures import road_network
+from .fixtures import road_network
 
 
 def test_from_dict_no_arguments():
@@ -202,7 +202,7 @@ def test_from_dict_ok_all_features():
     assert result["slk"] == 0.03
 
 def test_from_dict_ok_all_features_multi_test(road_network):
-    from util.confirm_test_cases_with_instance import confirm_test_cases_with_instance
+    from .util.confirm_test_cases_with_instance import confirm_test_cases_with_instance
     from megalinref import Lookup
     slk_lookup = Lookup.from_dict(road_network)
     confirm_test_cases_with_instance(slk_lookup)

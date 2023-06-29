@@ -1,5 +1,5 @@
 
-from util.dictdiffer_tools import assert_dictdiffer
+from .util.dictdiffer_tools import assert_dictdiffer
 
 
 def test_cwy_enum():

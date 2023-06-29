@@ -1,4 +1,4 @@
-from fixtures import road_network
+from .fixtures import road_network
 
 
 def test_coord_from_road_slk(road_network):

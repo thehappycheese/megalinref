@@ -11,6 +11,7 @@ use geo::{
    line_interpolate_point::LineInterpolatePoint,
    euclidean_distance::EuclideanDistance,
    line_locate_point::LineLocatePoint,
+   coords_iter::CoordsIter,
 };
 
 // use pyo3::exceptions::PyValueError;
@@ -263,7 +264,7 @@ impl Lookup {
                                     feature
                                     .geometry
                                     .0
-                                    .coords()
+                                    .coords_iter()
                                     .map(|coord| PyTuple::new(py, [coord.x, coord.y]))
                                     .collect::<Vec<&PyTuple>>()
                                 ))
