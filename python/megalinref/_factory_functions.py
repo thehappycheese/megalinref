@@ -54,22 +54,32 @@ def open_from_cache_or_download(file_path: Union[Path, str]) -> Lookup:
 
     path_to_data = Path(file_path)
 
+    if not path_to_data.parent.exists():
+        class ParentFolderDoesNotExist(Exception):
+            """Exception to indicate a parent folder of a target file does not exist"""
+        raise ParentFolderDoesNotExist(f"Parent directory of the target cache file does not exist. Please ensure this folder exists and try again: '{path_to_data.parent}'")
+
     try:
         return open_binary_file(path_to_data)
     except FileNotFoundError:
         print(f"There is no data cached at {path_to_data}")
-        # Fetch new data
-        downloaded_json_data = download_fresh_data_as_json()
-        # Convert to binary
-        slk_lookup = Lookup.from_dict(downloaded_json_data)
-
+        open_file_handel = path_to_data.open("wb")
         try:
-            # Cache the data
-            with path_to_data.open("wb") as f:
-                f.write(slk_lookup.to_binary())
-        except Exception as e:
-            print(f"Failed to cache data due to error. It will be downloaded again next time.: {e}")
-            return slk_lookup
-    except Exception as e:
+            # Fetch new data
+            downloaded_json_data = download_fresh_data_as_json()
+            # Read from Dictionary
+            slk_lookup = Lookup.from_dict(downloaded_json_data)
+            try:
+                # Convert the data to binary
+                binary_data = slk_lookup.to_binary()
+                # Cache the data
+                open_file_handel.write(binary_data)
+            except Exception as exception:
+                print(f"Failed to cache data. Road Network will be downloaded again on next run;\n{exception}")
+            finally:
+                return slk_lookup
+        finally:
+            open_file_handel.close()            
+    except Exception as exception:
         print("Unknown error while trying to open the cache")
-        raise e
+        raise exception

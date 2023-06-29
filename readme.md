@@ -191,18 +191,18 @@ Activate the new environment on windows;
 Or on linux;
 
 ```bash
-. .env/bin/activate
+source .env/bin/activate
 ```
 
 Next we need a build tool called maturin (see documentation [PyO3/maturin](https://github.com/PyO3/maturin)) installed into the virtual environment.
 
-```console
+```bash
 pip install maturin
 ```
 
 To make jupyter notebooks work, and to run tests also do:
 
-```console
+```bash
 pip install ipykernel pytest dictdiffer
 ```
 
