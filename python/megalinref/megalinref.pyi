@@ -157,7 +157,7 @@ class Lookup:
         self,
         road:str,
         slk:float,
-        carriagways:int
+        carriageways:int
     ) -> List[List[Tuple[float, float]]]:
         """
         Returns the lat/lon coordinates for the given Road Number and SLK.
