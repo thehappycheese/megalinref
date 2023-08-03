@@ -1,7 +1,7 @@
-use std::{collections::{
+use hashbrown::{
     HashMap,
-    hash_map::{Entry},
-}};
+    hash_map::Entry,
+};
 
 use bincode;
 
@@ -30,12 +30,12 @@ use rayon::prelude::*;
 
 use serde::{Serialize, Deserialize};
 
-use crate::datatypes::{
+use crate::data_types::{
     ExtractedFeature,
     RoadSectionsByCarriageway,
 };
 use crate::util::convert_degrees_to_metres;
-use crate::datatypes::Cwy;
+use crate::data_types::Cwy;
 
 
 

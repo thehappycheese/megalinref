@@ -1,10 +1,10 @@
 use pyo3::{prelude::*, types::PyList, types::PyDict};
 
 mod lookup;
-mod datatypes;
+mod data_types;
 mod util;
 
-use datatypes::{
+use data_types::{
     Cwy,
     NetworkType
 };
