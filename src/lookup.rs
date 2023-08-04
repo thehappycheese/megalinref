@@ -7,11 +7,11 @@ use bincode;
 
 
 use geo::{
-   point,
-   line_interpolate_point::LineInterpolatePoint,
-   euclidean_distance::EuclideanDistance,
-   line_locate_point::LineLocatePoint,
-   coords_iter::CoordsIter,
+    point,
+    line_interpolate_point::LineInterpolatePoint,
+    euclidean_distance::EuclideanDistance,
+    line_locate_point::LineLocatePoint,
+    coords_iter::CoordsIter,
 };
 
 // use pyo3::exceptions::PyValueError;
@@ -35,7 +35,10 @@ use crate::data_types::{
     RoadSectionsByCarriageway,
 };
 use crate::util::convert_degrees_to_metres;
-use crate::data_types::Cwy;
+use crate::data_types::{
+    Cwy,
+    NetworkType
+};
 
 
 
@@ -62,7 +65,7 @@ impl Lookup {
             None => return Err(pyo3::exceptions::PyException::new_err("Unable to extract 'features' from input")),
         };
 
-        let arg_features = match arg_features.cast_as::<PyList>() {
+        let arg_features = match arg_features.downcast::<PyList>() {
             Ok(features) => features,
             Err(_) => return Err(pyo3::exceptions::PyException::new_err("Unable to cast 'features' to list")),
         };
@@ -95,7 +98,7 @@ impl Lookup {
     pub fn from_binary(input: &PyBytes) -> PyResult<Self> {
         match bincode::deserialize::<Self>(input.as_bytes()) {
             Ok(x)=>Ok(x),
-            Err(e)=>Err(pyo3::exceptions::PyValueError::new_err("Unable to deserializse the provided bytes")),
+            Err(_)=>Err(pyo3::exceptions::PyValueError::new_err("Unable to deserialize the provided bytes")),
         }
     }
 
@@ -124,15 +127,16 @@ impl Lookup {
         &self,
         lat: f64,
         lon: f64,
-        carriageways: u8,
-        network_types: u8,
-        roads:Vec<String>,
+        carriageways: Option<u8>,
+        network_types: Option<u8>,
+        roads:Option<Vec<String>>,
         py: Python,
     ) -> PyResult<PyObject> {
 
         let pnt = point!(x: lon, y: lat);
 
-        let dont_filter_by_roads = roads.len() == 0;
+        let carriageways = carriageways.unwrap_or(Cwy::all());
+        let network_types = network_types.unwrap_or(NetworkType::all());
 
         let lookup_result = self
             .features
@@ -141,7 +145,7 @@ impl Lookup {
             .filter(|(_index, ExtractedFeature { properties, .. })| {
                    properties.cwy.matches_filter(carriageways)
                 && properties.network_type.matches_filter(network_types)
-                && (dont_filter_by_roads || roads.iter().any(|item| *item == properties.road))
+                && roads.as_ref().map(|some_roads| some_roads.iter().any(|item| *item == properties.road)).unwrap_or(true)
             })
             .map(|(index, feature)| Some((index, feature.geometry.0.euclidean_distance(&pnt)))) // TODO: should be haversine distance
             .reduce(
@@ -241,45 +245,47 @@ impl Lookup {
         road: &str,
         slk_from: f64,
         slk_to: f64,
-        carriageways: u8,
-        offset: f64,
+        carriageways: Option<u8>,
+        //offset: f64,
         py: Python,
     ) -> PyResult<PyObject> {
+        let carriageways = carriageways.unwrap_or(Cwy::all());
         if let Some(carriageway_data) = self.index.get(road){
-            let carriageway_linestrings:Vec<PyObject> = 
-                carriageway_data
-                .iter_matching_carriageways(carriageways)
-                .filter_map(|(_cwy, index_range)| {
-                    let linestrings:Vec<&PyList> =
-                        self
-                        .features[index_range]
-                        .into_iter()
-                        .filter_map(|feature|{
-                            let max_slk_from   = slk_from.max(feature.properties.slk_from);
-                            let min_slk_to     = slk_to  .min(feature.properties.slk_to  );
-                            let signed_overlap = min_slk_to - max_slk_from;
-                            if signed_overlap > 0f64 {
-                                Some(PyList::new(
-                                    py,
-                                    feature
-                                    .geometry
-                                    .0
-                                    .coords_iter()
-                                    .map(|coord| PyTuple::new(py, [coord.x, coord.y]))
-                                    .collect::<Vec<&PyTuple>>()
-                                ))
-                            }else{
-                                None
-                            }
-                        })
-                        .collect();
-                    Some(PyList::new(py, linestrings).to_object(py))
-                })
-                .collect();
-            Ok(PyList::new(py,carriageway_linestrings).to_object(py))
+            let carriageway_linestrings = PyDict::new(py);
+            for (cwy, index_range) in carriageway_data.iter_matching_carriageways(carriageways) {
+                let linestrings:Vec<&PyList> =
+                    self
+                    .features[index_range]
+                    .into_iter()
+                    .filter_map(|feature|{
+                        let max_slk_from   = slk_from.max(feature.properties.slk_from);
+                        let min_slk_to     = slk_to  .min(feature.properties.slk_to  );
+                        let signed_overlap = min_slk_to - max_slk_from;
+                        if signed_overlap > 0f64 {
+                            let line_string = feature.geometry.0;
+                            // the line_string starts at feature.properties.slk_from
+                            // and ends at feature.properties.slk_to
+                            // and we want to truncate it to slk_from - slk_to
+                            
+
+                            Some(PyList::new(
+                                py,
+                                
+                                line_string.coords_iter()
+                                .map(|coord| PyTuple::new(py, [coord.x, coord.y]))
+                                .collect::<Vec<&PyTuple>>()
+                            ))
+                        }else{
+                            None
+                        }
+                    })
+                    .collect();
+                carriageway_linestrings.set_item(cwy.to_string(), PyList::new(py, linestrings).to_object(py))?;
+            }
+            Ok(carriageway_linestrings.to_object(py))
         }else{
-            let cway_filter = Cwy::filter_to_string(carriageways);
-            Err(pyo3::exceptions::PyValueError::new_err(format!("Unable to find result for road {road}-{cway_filter} slk {slk_from}-{slk_to}")))
+            let carriageway_filter = Cwy::filter_to_string(carriageways);
+            Err(pyo3::exceptions::PyValueError::new_err(format!("Unable to find result for road {road}-{carriageway_filter} slk {slk_from}-{slk_to}")))
         }
     }
 }

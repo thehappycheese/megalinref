@@ -5,12 +5,6 @@ use pyo3::{
 
 use serde::{Serialize, Deserialize};
 
-
-// define enum members up here so we don't mix them up when we have to type out the numbers multiple times.
-const CWY_LEFT:u8   = 0b0000_0100;
-const CWY_SINGLE:u8 = 0b0000_0010;
-const CWY_RIGHT:u8  = 0b0000_0001;
-
 /// The carriageway of a road.
 /// 
 /// Rust does not treat Enums as a bitflags, but we can abuse casting to and from u8 to make it do so anyway.
@@ -28,6 +22,8 @@ const CWY_RIGHT:u8  = 0b0000_0001;
 /// 
 /// > Note: The cwy field is ordered `L` then `S` then `R`
 /// 
+/// 
+#[repr(u8)]
 #[derive(
     Serialize, Deserialize,
     Copy, Clone,
@@ -35,12 +31,19 @@ const CWY_RIGHT:u8  = 0b0000_0001;
     PartialOrd, Ord
 )]
 pub enum Cwy {
-    Left   = CWY_LEFT   as isize,
-    Single = CWY_SINGLE as isize,
-    Right  = CWY_RIGHT  as isize,
+    Left   = 0b0000_0100,
+    Single = 0b0000_0010,
+    Right  = 0b0000_0001,
 }
 
 impl Cwy{
+
+    pub fn all()->u8 {
+        Cwy::Left as u8 | 
+        Cwy::Single as u8 |
+        Cwy::Right as u8
+    }
+
     pub fn matches_filter(&self, filter:u8) -> bool{
         return ((*self as u8) & filter) != 0
     }
@@ -84,6 +87,17 @@ impl TryFrom<&str> for Cwy{
             "r"      => Ok(Cwy::Right),
             other    => Err(exceptions::PyValueError::new_err::<String>(format!("Invalid value for CWY: Expected left, single, right, l, r, s but found '{other}' (Not case sensitive)")))
         }
+    }
+}
+
+impl std::fmt::Display for Cwy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Left   => write!(f, "Left"),
+            Self::Single => write!(f, "Single"),
+            Self::Right  => write!(f, "Right"),
+        }?;
+        Ok(())
     }
 }
 

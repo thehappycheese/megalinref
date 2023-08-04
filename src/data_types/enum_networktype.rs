@@ -9,6 +9,7 @@ use pyo3::{
 };
 use serde::{Serialize, Deserialize};
 
+#[repr(u8)]
 #[derive(
     Serialize, Deserialize,
     Copy, Clone,  PartialEq, PartialOrd
@@ -24,6 +25,14 @@ pub enum NetworkType {
 }
 
 impl NetworkType {
+    pub fn all() -> u8{
+        NetworkType::State_Road as u8 |
+        NetworkType::Local_Road as u8 |
+        NetworkType::Miscellaneous_Road as u8 |
+        NetworkType::Main_Roads_Controlled_Path as u8 |
+        NetworkType::Proposed_Road as u8 |
+        NetworkType::Crossover as u8
+    }
     pub fn matches_filter(&self, filter:u8) -> bool {
         return ((*self as u8) & filter) != 0
     }

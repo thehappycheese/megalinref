@@ -1,6 +1,6 @@
 
 
-from typing import Any, List, Dict, Tuple, TypedDict, Literal
+from typing import Any, List, Dict, Optional, Tuple, TypedDict, Literal
 
 
 Cwy:Dict[str, int]
@@ -122,11 +122,11 @@ class Lookup:
 
     def road_slk_from_coordinate(
         self,
-        lat:float,
-        lon:float,
-        carriageways:int,
-        network_types:int,
-        roads:List[str]
+        lat           : float,
+        lon           : float,
+        carriageways  : Optional[int],
+        network_types : Optional[int],
+        roads         : Optional[List[str]],
     ) -> Result_road_slk_from_coordinate:
         """
         Returns the Road Number and SLK for for the road closest to the given lat/lon coordinate..
@@ -215,7 +215,7 @@ class Lookup:
         slk_from     : float,
         slk_to       : float,
         carriageways : int,
-        offset       : float,
+        #offset       : float,
     )->List[List[Tuple[float, float]]]:
         """ Returns a list of linestrings truncated to slk_from and slk_to
 
@@ -229,7 +229,7 @@ class Lookup:
             slk_from     = 15.06,
             slk_to       = 15.20,
             carriageways = mlr.Cwy["S"],
-            offset       = 0,
+            # offset       = 0,
         )
         print(result)
         ```

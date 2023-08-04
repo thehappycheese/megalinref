@@ -4,7 +4,12 @@
     "cSpell.words": [
         "bincode",
         "hashbrown",
+        "linestring",
+        "linestrings",
         "megalinref",
-        "pymodule"
+        "pymethods",
+        "pymodule",
+        "repr",
+        "staticmethod"
     ]
 }
