@@ -135,6 +135,8 @@ assert result == [[(115.81402235326775, -31.897493888518945)]]
 
 ### 3.4. Use `linestring_from_road_slk`
 
+🚧 NOTE: This function isn't working yet! It does not properly slice the linestring at slk_from and slk_to! 🚧
+
 ```python
 result = slk_lookup.linestring_from_road_slk(
     road         = "H013",
