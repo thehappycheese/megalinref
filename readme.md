@@ -4,9 +4,9 @@ Python module for converting between lat / lon and road / chainage.
 
 Uses Rust binaries in the backend for the mega-speed you deserve :)
 
-1. Convert coordinates road number, carriageway and SLKs,
-2. Convert SLK observations converted into coordinates
-   - Previously I implemented a pure Rust server for this purpose; see <https://github.com/thehappycheese/nicklinref_rust>
+1. Convert (latitude, longitude) into (road_number, carriageway, slk),
+2. Convert (road_number, slk) into (latitude, longitude)
+   - For this task, you can also check out my other project [nicklinref_rust](https://github.com/thehappycheese/nicklinref_rust) which exposes similar functionality as a web service
 
 - [1. Development Progress](#1-development-progress)
 - [2. Installation](#2-installation)
