@@ -2,6 +2,10 @@
 
 Python module for converting between lat / lon and road / chainage.
 
+This project is currently focused only on the Main Roads Western Australia Road Network which is
+freely avaliable for download [here](https://portal-mainroads.opendata.arcgis.com/datasets/mainroads::road-network/about),
+this library includes a utility function to grab that data as demonstrated in the example below.
+
 Uses Rust binaries in the backend for the mega-speed you deserve :)
 
 1. Convert (latitude, longitude) into (road_number, carriageway, slk),
@@ -85,8 +89,9 @@ slk_lookup = open_from_cache_or_download("road_network.bin")
 
 ### 3.2. Use `road_slk_from_coordinate`
 
+The following example takes a Latitude / Longitude coordinate and returns the nearest Road and SLK. Note that the `'feature'` refers to the nearest chunk of the road network, and the `slk` property gives the nearest chainage on that chunk.
+
 ```python
-# lets lookup a road/slk based on a lat/lon
 result = slk_lookup.road_slk_from_coordinate(
     lat           = -31.89006203575722,
     lon           = 115.80183730752809,
@@ -116,6 +121,9 @@ print(result)
 
 ### 3.3. Use `coordinate_from_road_slk`
 
+The Following example takes a Road Number and SLK (Straight Line Kilometer, a.k.a. Chainage) and returns a Latitude Longitude point.
+Please note that the return value may include multiple points if there are multiple carriageways. The format of the returned value is subject to change as I continue to work on this project.
+
 ```python
 # now lets lookup a lat/lon based on a road/slk
 result = slk_lookup.coordinate_from_road_slk(
@@ -127,15 +135,17 @@ print(result)
 ```
 
 ```text
-assert result == [[(115.81402235326775, -31.897493888518945)]]
+[[(115.81402235326775, -31.897493888518945)]]
 ```
-
-> the result type will be improved in future; currently you get a list of up to
-> three lists, each containing zero or more coordinates as tuples.
 
 ### 3.4. Use `linestring_from_road_slk`
 
 🚧 NOTE: This function isn't working yet! It does not properly slice the linestring at slk_from and slk_to! 🚧
+
+🚧 Please check back later as I hope to fix this soon, or if you are keen to help come help me contribute to the underlying rust library <https://github.com/georust/geo> 😀 🚧
+
+The following example (when it is working properly) will take a Road Number and a road section defined by a starting SLK and an ending SLK.
+The result will be a LineString (array of coordinates) representing the road centreline which has been accuratly truncated to the starting and ending SLK. If there are multiple carriageways in the result then multiple LineStrings will be returned.
 
 ```python
 result = slk_lookup.linestring_from_road_slk(
