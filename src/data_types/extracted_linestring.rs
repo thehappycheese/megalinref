@@ -1,6 +1,6 @@
 use pyo3::types::PyDict;
 
-use geo::{LineString};
+use geo::LineString;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -23,13 +23,13 @@ impl<'a> FromPyObject<'a> for ExtractedLineString {
         };
 
         let coords = match linestring_dict.get_item("coordinates"){
-            Some(coords) => match coords.extract::<Vec<&PyAny>>(){
+            Ok(Some(coords)) => match coords.extract::<Vec<&PyAny>>(){
                 Ok(coords) => coords,
                 Err(_) => return Err(pyo3::exceptions::PyException::new_err(
                     "Unable to interpret 'coordinates' in one of the 'features'"
                 )),
             },
-            None => return Err(pyo3::exceptions::PyException::new_err(
+            _ => return Err(pyo3::exceptions::PyException::new_err(
                 "Unable to find the 'coordinates' item on one of the features."
             )),
         };
@@ -48,3 +48,6 @@ impl<'a> FromPyObject<'a> for ExtractedLineString {
         Ok(result)
     }
 }
+
+
+

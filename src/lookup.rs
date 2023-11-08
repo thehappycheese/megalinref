@@ -61,8 +61,8 @@ impl Lookup {
     pub fn from_dict(input:&PyDict) -> PyResult<Self> {
 
         let arg_features = match input.get_item("features") {
-            Some(features) => features,
-            None => return Err(pyo3::exceptions::PyException::new_err("Unable to extract 'features' from input")),
+            Ok(Some(features)) => features,
+            _ => return Err(pyo3::exceptions::PyException::new_err("Unable to extract 'features' from input")),
         };
 
         let arg_features = match arg_features.downcast::<PyList>() {
@@ -262,7 +262,7 @@ impl Lookup {
                         let min_slk_to     = slk_to  .min(feature.properties.slk_to  );
                         let signed_overlap = min_slk_to - max_slk_from;
                         if signed_overlap > 0f64 {
-                            let line_string = feature.geometry.0;
+                            let line_string = &feature.geometry.0;
                             // the line_string starts at feature.properties.slk_from
                             // and ends at feature.properties.slk_to
                             // and we want to truncate it to slk_from - slk_to
@@ -270,7 +270,6 @@ impl Lookup {
 
                             Some(PyList::new(
                                 py,
-                                
                                 line_string.coords_iter()
                                 .map(|coord| PyTuple::new(py, [coord.x, coord.y]))
                                 .collect::<Vec<&PyTuple>>()

@@ -81,13 +81,13 @@ impl<'a> FromPyObject<'a> for ExtractedProperties{
         macro_rules! try_extract_from_dict {
             ($key:expr, $typ:ty) => {
                 match dict.get_item($key){
-                    Some(pyany) => match pyany.extract::<$typ>() {
+                    Ok(Some(pyany)) => match pyany.extract::<$typ>() {
                         Ok(value) => value,
                         Err(_) => return Err(pyo3::exceptions::PyException::new_err(
                             format!("'{}' must be of type {}", $key , stringify!($typ))
                         )),
                     },
-                    None => return Err(pyo3::exceptions::PyException::new_err(
+                    _ => return Err(pyo3::exceptions::PyException::new_err(
                         format!("Item '{}' missing from 'properties'", $key)
                     )),
                 }

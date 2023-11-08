@@ -1,5 +1,5 @@
 use pyo3::prelude::*;
-use pyo3::types::{PyDict};
+use pyo3::types::PyDict;
 use serde::{Serialize, Deserialize};
 use super::{
     ExtractedLineString,
@@ -24,8 +24,8 @@ impl<'a> FromPyObject<'a> for ExtractedFeature{
         };
 
         let properties = match dict.get_item("properties"){
-            Some(properties) => properties,
-            None => return Err(pyo3::exceptions::PyException::new_err(
+            Ok(Some(properties)) => properties,
+            _ => return Err(pyo3::exceptions::PyException::new_err(
                 "Unable to find the 'properties' item on one of the features."
             )),
         };
@@ -36,11 +36,11 @@ impl<'a> FromPyObject<'a> for ExtractedFeature{
         };
 
         let geometry = match dict.get_item("geometry"){
-            Some(geometry) => match geometry.extract::<ExtractedLineString>() {
+            Ok(Some(geometry)) => match geometry.extract::<ExtractedLineString>() {
                 Ok(geometry) => geometry,
                 Err(x) => return Err(x),
             },
-            None => return Err(pyo3::exceptions::PyException::new_err(
+            _ => return Err(pyo3::exceptions::PyException::new_err(
                 "Unable to find the 'geometry' item on one of the features."
             )),
         };

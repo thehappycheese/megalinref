@@ -2,7 +2,7 @@
 name            = "megalinref"
 description     = "Find SLK and Road Number from lat/lon (and vice versa) using Main Roads Western Australia open data portal data."
 readme          = "readme.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [
     {name="Nicholas Archer"}
 ]

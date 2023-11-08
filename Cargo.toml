@@ -8,8 +8,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 geo        = {version = "0.26",  features = ["use-serde"]}
-pyo3       = {version = "0.19",  features = [
-    "abi3-py38",
+geo-types = { version = "0.7.9" }
+pyo3       = {version = "0.20",  features = [
+    "abi3-py310",
     "extension-module",
     "nightly"
 ]}
