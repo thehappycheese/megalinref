@@ -11,7 +11,8 @@ use geo::{
     line_interpolate_point::LineInterpolatePoint,
     euclidean_distance::EuclideanDistance,
     line_locate_point::LineLocatePoint,
-    coords_iter::CoordsIter,
+    coords_iter::CoordsIter, 
+    LineSplit,
 };
 
 // use pyo3::exceptions::PyValueError;
@@ -261,22 +262,29 @@ impl Lookup {
                         let max_slk_from   = slk_from.max(feature.properties.slk_from);
                         let min_slk_to     = slk_to  .min(feature.properties.slk_to  );
                         let signed_overlap = min_slk_to - max_slk_from;
-                        if signed_overlap > 0f64 {
-                            let line_string = &feature.geometry.0;
-                            // the line_string starts at feature.properties.slk_from
-                            // and ends at feature.properties.slk_to
-                            // and we want to truncate it to slk_from - slk_to
-                            
-
-                            Some(PyList::new(
-                                py,
-                                line_string.coords_iter()
-                                .map(|coord| PyTuple::new(py, [coord.x, coord.y]))
-                                .collect::<Vec<&PyTuple>>()
-                            ))
-                        }else{
-                            None
+                        if signed_overlap <= 0f64 {
+                            return None;
                         }
+                        let line_string = &feature.geometry.0;
+                        // the line_string starts at feature.properties.slk_from
+                        // and ends at feature.properties.slk_to
+                        // and we want to truncate it to slk_from - slk_to
+                        
+                        let slk_length = feature.properties.slk_to - feature.properties.slk_from;
+                        let fraction_start = (slk_from - feature.properties.slk_from) / slk_length;
+                        let fraction_end = (slk_to - feature.properties.slk_from) / slk_length;
+
+                        line_string
+                            .line_split_twice(fraction_start, fraction_end)
+                            .and_then(|result| result.into_second())
+                            .and_then(|line_string|
+                                Some(PyList::new(
+                                    py,
+                                    line_string.coords_iter()
+                                    .map(|coord| PyTuple::new(py, [coord.x, coord.y]))
+                                    .collect::<Vec<&PyTuple>>()
+                                ))
+                            )
                     })
                     .collect();
                 carriageway_linestrings.set_item(cwy.to_string(), PyList::new(py, linestrings).to_object(py))?;
