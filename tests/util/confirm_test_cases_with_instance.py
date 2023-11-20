@@ -7,7 +7,7 @@ example_result_cases = [
             "lon"           : 115.80183730752809,
             "carriageways"  : 0b1111_1111, # megalinref.Cwy["All"],
             "network_types" : 0b1111_1111, # megalinref.NetworkType["All"],
-            "roads"         : []
+            #"roads"         : []
         },
         "expected_result":{
             "feature":{

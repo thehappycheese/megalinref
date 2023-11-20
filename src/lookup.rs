@@ -134,6 +134,16 @@ impl Lookup {
         py: Python,
     ) -> PyResult<PyObject> {
 
+        // Error if roads is blank because it will never work
+        if let Some(roads) = &roads {
+            if roads.len() == 0 {
+                return Err(pyo3::exceptions::PyException::new_err(concat!(
+                    "The parameter roads is an empty array; this would return no results. ",
+                    "Please omit this parameter or use roads=None to match any road."
+                )));
+            }
+        }
+        
         let pnt = point!(x: lon, y: lat);
 
         let carriageways = carriageways.unwrap_or(Cwy::all());

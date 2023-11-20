@@ -171,7 +171,7 @@ def test_from_dict_ok_one_feature():
         lat           = -31.90864177309936,
         carriageways  = mlr.Cwy["All"],
         network_types = mlr.NetworkType["All"],
-        roads         = [],
+        #roads         = [],
     )
 
     assert result["feature"]["ROAD"] == "X001"
@@ -195,7 +195,7 @@ def test_from_dict_ok_all_features():
         lat           = -31.90864177309936,
         carriageways  = mlr.Cwy["All"],
         network_types = mlr.NetworkType["All"],
-        roads=[]
+        #roads=[]
     )
     
     assert result["feature"]["ROAD"] == "X001"

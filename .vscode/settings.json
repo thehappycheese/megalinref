@@ -1,6 +1,7 @@
 {
 	"python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
+    "editor.inlayHints.enabled": "offUnlessPressed",
     "cSpell.words": [
         "bincode",
         "hashbrown",
