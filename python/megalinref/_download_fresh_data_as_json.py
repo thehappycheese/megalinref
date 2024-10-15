@@ -4,7 +4,7 @@ from arcgis2geojson import arcgis2geojson
 import math
 
 DATA_SOURCE_URL = (
-    "https://mrgis.mainroads.wa.gov.au/arcgis/rest/services/OpenData/RoadAssets_DataPortal/MapServer/17/query"
+    "https://gisservices.mainroads.wa.gov.au/arcgis/rest/services/OpenData/RoadAssets_DataPortal/MapServer/17/query"
     "?where=1%3D1"
     "&orderByFields=OBJECTID"
     "&outFields=ROAD,START_SLK,END_SLK,CWY,NETWORK_TYPE,START_TRUE_DIST,END_TRUE_DIST"
