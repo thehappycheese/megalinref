@@ -10,11 +10,11 @@ jobs:
       matrix:
         target: [x64, x86]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        id: installpython39
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        id: installpython311
         with:
-          python-version: 3.9
+          python-version: 3.11
           architecture: ${{ matrix.target }}
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
@@ -26,13 +26,13 @@ jobs:
         uses: messense/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out ../dist -m Cargo.toml --interpreter ${{ steps.installpython39.outputs.python-path }}
+          args: --release --out ../dist -m Cargo.toml --interpreter ${{ steps.installpython311.outputs.python-path }}
       - name: Install built wheel
         run: |
           pip install megalinref --no-index --find-links ../dist --force-reinstall
           python -c "import megalinref"
       - name: Upload wheels
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: wheels
           path: ../dist
@@ -44,18 +44,18 @@ jobs:
         target: [x86_64]
         #, i686]
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      id: installpython39lin
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      id: installpython311lin
       with:
-        python-version: 3.9
+        python-version: 3.11
         architecture: x64
     - name: Build wheels
       uses: messense/maturin-action@v1
       with:
         target: ${{ matrix.target }}
         manylinux: auto
-        args: --release --out ../dist -m Cargo.toml --interpreter ${{ steps.installpython39lin.outputs.python-path }}
+        args: --release --out ../dist -m Cargo.toml --interpreter ${{ steps.installpython311lin.outputs.python-path }}
     - name: Install built wheel
       if: matrix.target == 'x86_64'
       run: |
